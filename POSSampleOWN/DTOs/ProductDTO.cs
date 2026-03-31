@@ -10,7 +10,7 @@ namespace POSSampleOWN.DTOs
         public decimal Price { get; set; }
         public int StockQuantity { get; set; }
         public int CategoryId { get; set; }
-        public bool IsActive { get; set; }
+        public bool DeleteFlag { get; set; }
     }
 
     public class CreateProductDTO
@@ -26,11 +26,12 @@ namespace POSSampleOWN.DTOs
         public int StockQuantity { get; set; }
         [Required]
         public int CategoryId { get; set; }
+        // public int CreatedBy { get; set; }
     }
 
     public class UpdateProductDTO
     {
-        
+
         [MaxLength(150)]
         public string? Name { get; set; }
         [MaxLength(500)]
@@ -41,7 +42,8 @@ namespace POSSampleOWN.DTOs
         public int StockQuantity { get; set; }
         [Required]
         public int CategoryId { get; set; }
-        public bool? IsActive { get; set; }
+        public bool? DeleteFlag { get; set; }
+        // public int UpdatedBy { get; set; }
     }
 
     public class ProductResponseDTO

@@ -1,8 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace POSSampleOWN.Models
 {
-    public class Category
+    public class User
     {
         [Key]
         public int Id { get; set; }
@@ -11,8 +11,13 @@ namespace POSSampleOWN.Models
         [MaxLength(100)]
         public string Name { get; set; } = null!;
 
-        [MaxLength(250)]
-        public string? Description { get; set; }
+        [Required]
+        [MaxLength(100)]
+        public string Email { get; set; } = null!;
+
+        [Required]
+        [MaxLength(255)]
+        public string Password { get; set; } = null!;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

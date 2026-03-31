@@ -22,19 +22,20 @@ namespace POSSampleOWN.Models
         [Required]
         public int StockQuantity { get; set; }
 
-        //[StringLength(50)]
-        //public string SKU { get; set; }
+        // public int CreatedBy { get; set; }
 
-        //[StringLength(50)]
-        //public string Barcode { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? UpdatedAt { get; set; }
+
+        public bool DeleteFlag { get; set; } = false;
 
         [ForeignKey("Category")]
         public int CategoryId { get; set; }
 
-        public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; }
+        public Category Category { get; set; } = null!;
 
-        public Category Category { get; set; }
+        //[ForeignKey("CreatedBy")]
+        //public User User { get; set; } = null!;
     }
 }
