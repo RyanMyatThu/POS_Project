@@ -367,3 +367,4 @@ logs/
 
 # Migrations
 Migrations/
+/module_checklist.md
