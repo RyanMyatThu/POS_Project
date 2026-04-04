@@ -98,6 +98,49 @@ namespace POSSampleOWN.Controllers
             }
         }
 
+        // POST: api/products/bulk
+        [HttpPost("bulk")]
+        public async Task<IActionResult> BulkCreate([FromBody] List<CreateProductDTO> bulkRequest)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponse<object>
+                {
+                    IsSuccess = false,
+                    Message = "Invalid data"
+                });
+            }
+
+            try
+            {
+                var bulkCreatedProducts = await _productService.BulkCreateAsync(bulkRequest);
+
+                if (bulkCreatedProducts is null)
+                {
+                    return BadRequest(new ApiResponse<object>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to create products."
+                    });
+                }
+
+                return Ok(new ApiResponse<List<ProductDTO>>
+                {
+                    IsSuccess = true,
+                    Message = $"{bulkCreatedProducts.Count} books created successfully.",
+                    Data = bulkCreatedProducts
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    IsSuccess = false,
+                    Message = $"An error occurred while creating the product: {ex.Message}"
+                });
+            }
+        }
+
         // PATCH: api/products/{id}
         [HttpPatch("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateProductDTO updateRequest)

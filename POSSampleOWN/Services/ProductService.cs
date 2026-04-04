@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using POSSampleOWN.Data;
 using POSSampleOWN.DTOs;
@@ -90,6 +91,11 @@ namespace POSSampleOWN.Services
         #region create product
         public async Task<ProductDTO> CreateAsync(CreateProductDTO request)
         {
+            var categoryExists = await _db.Categories
+                .AnyAsync(c => c.Id == request.CategoryId && !c.DeleteFlag);
+
+            if (!categoryExists) throw new Exception("Category not found");
+
             var newProduct = new Product
             {
                 Name = request.Name.Trim(),
@@ -116,6 +122,35 @@ namespace POSSampleOWN.Services
             };
 
             return data;
+        }
+        #endregion
+
+        #region bulk insert product
+        public async Task<List<ProductDTO>> BulkCreateAsync(List<CreateProductDTO> request)
+        { 
+            var products = request.Select(p => new Product
+            {
+                Name = p.Name.Trim(),
+                Description = p.Description?.Trim(),
+                Price = p.Price,
+                StockQuantity = p.StockQuantity,
+                CategoryId = p.CategoryId,
+                CreatedAt = DateTime.UtcNow
+            }).ToList();
+
+            _db.Products.AddRange(products);
+            await _db.SaveChangesAsync();
+
+            return products.Select(p => new ProductDTO
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                Price = p.Price,
+                StockQuantity = p.StockQuantity,
+                CategoryId = p.CategoryId,
+                DeleteFlag = p.DeleteFlag
+            }).ToList();
         }
         #endregion
 
