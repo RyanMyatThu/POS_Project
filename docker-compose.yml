@@ -1,0 +1,27 @@
+services:
+  possampleown:
+    image: ${DOCKER_REGISTRY-}possampleown
+    build:
+      context: .
+      dockerfile: POSSampleOWN/Dockerfile
+    ports:
+      - 5000:8080 #HTTP
+      - 7144:8081 #HTTPS
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__POSConnectionString=Host=mini_pos_db;Database=mini_pos_db;Username=postgres;Password=admin;
+
+  mini_pos_db:
+    image: postgres:17-alpine
+    container_name: mini_pos_db
+    environment:
+      POSTGRES_DB: mini_pos_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+volumes:
+  postgres_data:

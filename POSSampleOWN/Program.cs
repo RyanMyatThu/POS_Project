@@ -28,13 +28,7 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 
-    var app = builder.Build();
-    // Configure the HTTP request pipeline.
-    if (app.Environment.IsDevelopment())
-    {
-        app.MapSwagger("/openapi/{documentName}.json");
-        app.MapScalarApiReference();
-    }
+    
 
     // Add CORS Policy
     builder.Services.AddCors(options =>
@@ -47,7 +41,13 @@ try
         });
     });
 
-    
+    var app = builder.Build();
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapSwagger("/openapi/{documentName}.json");
+        app.MapScalarApiReference();
+    }
 
     app.UseHttpsRedirection();
 
