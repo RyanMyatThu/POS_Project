@@ -26,15 +26,17 @@ public class SaleService
     #region Create Sale
     public async Task<ApiResponse<SaleDTO>> CreateSaleAsync(CreateSaleDTO reqSale)
     {
-        using var transcation = await _db.Database.BeginTransactionAsync();
+        using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
             if (!ValidateSale(reqSale))
-                return ApiResponse<SaleDTO>.Fail("Invalid sale data. Please check the items and quantities.");
+                return ApiResponse<SaleDTO>.Fail("Invalid sale data.");
 
-            //Check Inventory(product exists +quantity exists) -parameter(product id ?)
-            //Remove item from inventory (update stock quantity in product table)\
-
+            var productIds = reqSale.Items.Select(x => x.ProductId).Distinct().ToList();
+            var products = await _db.Products
+                .Where(p => productIds.Contains(p.Id))
+                .ToDictionaryAsync(p =>(long) p.Id);
+            
             decimal totalPrice = TotalPrice(reqSale);
             var saveModel = new Tbl_Sale
             {
@@ -43,20 +45,16 @@ public class SaleService
                 CreatedAt = DateTime.Now
             };
 
-            foreach(var item in reqSale.Items)
+            saveModel.SaleItems = reqSale.Items.Select(item => new Tbl_SaleItem
             {
-                var saleItem = new Tbl_SaleItem
-                {
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity,
-                    Price = await SubPrice(item)
-                };
-                saveModel.SaleItems.Add(saleItem);
-            }
+                ProductId = item.ProductId,
+                Quantity = item.Quantity,
+                Price = products[item.ProductId].Price
+            }).ToList();
 
             _db.Sales.Add(saveModel);
             await _db.SaveChangesAsync();
-            await transcation.CommitAsync();
+            await transaction.CommitAsync();
 
             var resModel = new SaleDTO
             {
@@ -65,21 +63,19 @@ public class SaleService
                 VoucherCode = saveModel.VoucherCode,
                 SaleItems = saveModel.SaleItems.Select(x => new SaleItemDTO
                 {
-                    ProductName = _db.Products.Where(p => p.Id == x.ProductId)
-                    .Select(p => p.Name).
-                    FirstOrDefault() ?? "",
+                    // Safely get the name from the dictionary we built earlier
+                    ProductName = products.TryGetValue(x.ProductId, out var p) ? p.Name : "Unknown Product",
                     Quantity = x.Quantity,
                     Price = x.Price
                 }).ToList()
             };
 
             return ApiResponse<SaleDTO>.Success(resModel);
-
         }
         catch (Exception ex)
         {
-            await transcation.RollbackAsync();
-            return ApiResponse<SaleDTO>.Fail($"An error occurred while creating the sale: {ex.Message}");
+            await transaction.RollbackAsync();
+            return ApiResponse<SaleDTO>.Fail($"Error: {ex.Message}");
         }
     }
     #endregion
