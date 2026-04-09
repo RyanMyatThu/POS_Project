@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using POSSampleOWN.domain.Features.ProductsCatalog;
+using POSSampleOWN.domain.Features.Search;
 using POSSampleOWN.domain.Features.Inventory;
 using POSSampleOWN.domain.Features.Sale;
 
@@ -24,6 +25,7 @@ namespace POSSampleOWN.domain.Features
             
             // Register Features
             builder.Services.AddScoped<IProductCatalogService, ProductCatalogService>();
+            builder.Services.AddScoped<ISearchService, SearchService>();
             builder.Services.AddScoped<IInventoryService, InventoryService>();
             builder.Services.AddScoped<ISaleService, SaleService>();
         }
