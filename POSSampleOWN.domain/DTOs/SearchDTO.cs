@@ -8,4 +8,20 @@
         public string? Type { get; set; }
         public decimal? Price { get; set; }
     }
+
+    public class SearchRequestDTO
+    {
+        public int? CategoryId { get; set; }
+        public decimal? MinPrice { get; set; }
+        public decimal? MaxPrice { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public int? MinStockQuantity { get; set; }
+        public int? MaxStockQuantity { get; set; }
+        public string? Name { get; set; }
+        public string SortBy { get; set; } = "Name";
+        public bool IsDescending { get; set; } = false;
+        public int PageNumber { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+    }
 }

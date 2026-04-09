@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using POSSampleOWN.domain.Features.ProductsCatalog;
+using POSSampleOWN.domain.Features.Search;
 
 namespace POSSampleOWN.domain.Features
 {
@@ -22,6 +23,7 @@ namespace POSSampleOWN.domain.Features
             
             // Register Features
             builder.Services.AddScoped<IProductCatalogService, ProductCatalogService>();
+            builder.Services.AddScoped<ISearchService, SearchService>();
         }
     }
 }
