@@ -20,7 +20,7 @@ namespace POSSampleOWN.domain.Features
         public static void AddDomain(this WebApplicationBuilder builder)
         {
             
-            builder.Services.AddDbContext<POSSampleOWN.Data.POSDbContext>(options =>
+            builder.Services.AddDbContext<POSSampleOWN.database.Data.POSDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("POSConnectionString")));
             
             // Register Features

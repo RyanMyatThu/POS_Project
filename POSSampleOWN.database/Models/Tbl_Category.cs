@@ -1,23 +1,26 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
-namespace POSSampleOWN.Models
+namespace POSSampleOWN.database.Models;
+
+public class Tbl_Category
 {
-    public class Tbl_Category
-    {
-        [Key]
-        public int Id { get; set; }
+    [Key]
+    public int Id { get; set; }
 
-        [Required]
-        [MaxLength(100)]
-        public string Name { get; set; } = null!;
+    [Required]
+    [MaxLength(100)]
+    public string Name { get; set; } = null!;
 
-        [MaxLength(250)]
-        public string? Description { get; set; }
+    [MaxLength(250)]
+    public string? Description { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int CreatedBy { get; set; }
 
-        public bool DeleteFlag { get; set; } = false;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public ICollection<Tbl_Product>? Products { get; set; }
-    }
+    public bool DeleteFlag { get; set; } = false;
+
+    public ICollection<Tbl_Product>? Products { get; set; }
+
+    public Tbl_User User { get; set; } = null!;
 }

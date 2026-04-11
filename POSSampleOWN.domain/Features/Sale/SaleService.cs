@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.EntityFrameworkCore;
-using POSSampleOWN.Data;
+using POSSampleOWN.database.Data;
 using POSSampleOWN.database.Models;
 using POSSampleOWN.domain.DTOs;
-using POSSampleOWN.Models;
 using POSSampleOWN.Responses;
 using System;
 using System.Collections;
@@ -39,7 +38,7 @@ public class SaleService : ISaleService
             var productIds = reqSale.Items.Select(x => x.ProductId).Distinct().ToList();
             var products = await ActiveProduct
                                    .Where(p => productIds.Contains(p.Id))
-                                   .ToDictionaryAsync(p => (long)p.Id);
+                                   .ToDictionaryAsync(p => p.Id);
 
             // check product exists & sufficient quantity
             foreach (var item in reqSale.Items)

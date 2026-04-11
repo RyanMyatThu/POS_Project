@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using POSSampleOWN.domain.Features.ProductsCatalog;
 using POSSampleOWN.DTOs;
-using POSSampleOWN.Models;
+using POSSampleOWN.database.Models;
 using POSSampleOWN.Responses;
 using System.Threading.Tasks;
 
