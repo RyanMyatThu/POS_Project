@@ -3,8 +3,7 @@ using POSSampleOWN.database.Data;
 using POSSampleOWN.database.Models;
 using POSSampleOWN.Responses;
 using POSSampleOWN.DTOs;
-using System;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace POSSampleOWN.domain.Features.Auth
 {
@@ -17,8 +16,32 @@ namespace POSSampleOWN.domain.Features.Auth
             _context = context;
         }
 
+        #region email validation
+        public bool IsValidEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return false;
+
+            try
+            {
+                return Regex.IsMatch(email,
+                    @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+                    RegexOptions.IgnoreCase,
+                    TimeSpan.FromMilliseconds(250));
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                return false;
+            }
+        }
+        #endregion
+
+        #region user registration
         public async Task<ApiResponse<UserRegisterResponse>> RegisterAsync(UserRegisterRequest request)
         {
+            // email validation check
+            if (!IsValidEmail(request.Email)) return ApiResponse<UserRegisterResponse>.Fail("Invalid email format.");
+
             var existingUser = await _context.Users
                 .AnyAsync(u => u.Email == request.Email && !u.DeleteFlag);
 
@@ -58,5 +81,6 @@ namespace POSSampleOWN.domain.Features.Auth
                 return ApiResponse<UserRegisterResponse>.Fail($"An error occurred during registration: {ex.Message}");
             }
         }
+        #endregion
     }
 }

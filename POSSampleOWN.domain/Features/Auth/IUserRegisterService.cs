@@ -7,5 +7,6 @@ namespace POSSampleOWN.domain.Features.Auth
     public interface IUserRegisterService
     {
         Task<ApiResponse<UserRegisterResponse>> RegisterAsync(UserRegisterRequest request);
+        bool IsValidEmail(string email);
     }
 }

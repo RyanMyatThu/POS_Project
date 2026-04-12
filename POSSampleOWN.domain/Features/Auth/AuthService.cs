@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Text.RegularExpressions;
 using POSSampleOWN.database.Data;
 using POSSampleOWN.database.Models;
 using POSSampleOWN.DTOs;
@@ -28,7 +29,6 @@ public class AuthService : IAuthService
 
         if (user == null) return null;
 
-      
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
         {
             return null;
@@ -69,7 +69,7 @@ public class AuthService : IAuthService
         if (userToken == null) return null;
 
         userToken.Revoked = true;
-        
+
         var user = userToken.User;
         var newAccessToken = _tokenService.GenerateAccessToken(user);
         var newRefreshToken = _tokenService.GenerateRefreshToken();
