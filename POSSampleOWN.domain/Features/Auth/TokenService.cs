@@ -65,7 +65,7 @@ public class TokenService : ITokenService
             ValidateIssuer = false,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-            ValidateLifetime = false // Here we are saying that we don't care about the token's expiration date
+            ValidateLifetime = false 
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();

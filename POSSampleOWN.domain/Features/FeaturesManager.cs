@@ -31,6 +31,7 @@ namespace POSSampleOWN.domain.Features
             builder.Services.AddScoped<ISaleService, SaleService>();
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IUserRegisterService, UserRegisterService>();
         }
     }
 }

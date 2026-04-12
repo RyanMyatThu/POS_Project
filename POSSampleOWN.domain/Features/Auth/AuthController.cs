@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using POSSampleOWN.domain.Features.Auth;
-using POSSampleOWN.shared.DTOs.Auth;
+using POSSampleOWN.DTOs;
 using POSSampleOWN.Responses;
+using Microsoft.AspNetCore.Http;
 
 namespace POSSampleOWN.Controllers;
 
@@ -10,12 +12,32 @@ namespace POSSampleOWN.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IUserRegisterService _registerService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, IUserRegisterService registerService)
     {
         _authService = authService;
+        _registerService = registerService;
     }
 
+    [AllowAnonymous]
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] UserRegisterRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ApiResponse<object>.Fail("Invalid registration data."));
+
+        var result = await _registerService.RegisterAsync(request);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
@@ -29,22 +51,19 @@ public class AuthController : ControllerBase
             return Unauthorized(ApiResponse<object>.Fail("Invalid email or password."));
         }
 
-        return Ok(ApiResponse<TokenResponse>.Success(result, "Login successful."));
-    }
-
-    [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
-    {
-        if (string.IsNullOrEmpty(request.RefreshToken))
-            return BadRequest(ApiResponse<object>.Fail("Refresh token is required."));
-
-        var result = await _authService.RefreshTokenAsync(request.RefreshToken);
-
-        if (result == null)
+        // Store refresh token in HttpOnly cookie
+        var cookieOptions = new CookieOptions
         {
-            return Unauthorized(ApiResponse<object>.Fail("Invalid or expired refresh token."));
-        }
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddDays(7) 
+        };
+        Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptions);
 
-        return Ok(ApiResponse<TokenResponse>.Success(result, "Token refreshed successfully."));
+        // Clear refresh token from response body
+        result.RefreshToken = string.Empty;
+
+        return Ok(ApiResponse<TokenResponse>.Success(result, "Login successful."));
     }
 }

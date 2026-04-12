@@ -6,7 +6,7 @@ using Serilog;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-
+using POSSampleOWN.domain.Middlewares;
 
 try
 {
@@ -80,6 +80,7 @@ try
     app.UseHttpsRedirection();
 
     app.UseAuthentication();
+    app.UseMiddleware<Middleware>();
     app.UseAuthorization();
 
     app.MapControllers();

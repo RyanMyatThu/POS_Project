@@ -1,4 +1,4 @@
-using POSSampleOWN.shared.DTOs.Auth;
+using POSSampleOWN.DTOs;
 
 namespace POSSampleOWN.domain.Features.Auth;
 

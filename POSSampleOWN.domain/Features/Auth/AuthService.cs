@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using POSSampleOWN.database.Data;
 using POSSampleOWN.database.Models;
-using POSSampleOWN.shared.DTOs.Auth;
+using POSSampleOWN.DTOs;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -28,9 +28,7 @@ public class AuthService : IAuthService
 
         if (user == null) return null;
 
-        // Verify password (using BCrypt)
-        // Note: For existing plain text passwords, this will fail. 
-        // In a real migration, you'd handle that, but here we assume passwords follow the hash format.
+      
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
         {
             return null;
@@ -39,7 +37,6 @@ public class AuthService : IAuthService
         var accessToken = _tokenService.GenerateAccessToken(user);
         var refreshToken = _tokenService.GenerateRefreshToken();
 
-        // Save refresh token to database
         var expiryDays = int.Parse(_configuration["JwtSettings:RefreshTokenExpiryDays"] ?? "7");
         var userToken = new Tbl_User_Token
         {
@@ -71,14 +68,12 @@ public class AuthService : IAuthService
 
         if (userToken == null) return null;
 
-        // Revoke current token (Refresh Token Rotation)
         userToken.Revoked = true;
         
         var user = userToken.User;
         var newAccessToken = _tokenService.GenerateAccessToken(user);
         var newRefreshToken = _tokenService.GenerateRefreshToken();
 
-        // Save new refresh token
         var expiryDays = int.Parse(_configuration["JwtSettings:RefreshTokenExpiryDays"] ?? "7");
         var newUserToken = new Tbl_User_Token
         {
