@@ -58,8 +58,7 @@ namespace POSSampleOWN.Controllers
 
             return CreatedAtAction(
                 nameof(GetById),
-                new { id = result.Data!.Id },
-                result);
+                new { id = result.Data!.Id },result);
         }
 
         // PATCH: api/categories/{id}

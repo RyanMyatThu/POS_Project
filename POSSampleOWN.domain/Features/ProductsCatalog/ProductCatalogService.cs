@@ -422,7 +422,7 @@ namespace POSSampleOWN.domain.Features.ProductsCatalog
 
                 if (!string.IsNullOrWhiteSpace(request.Name))
                 {
-                    var isDuplicate = await _db.Products.AnyAsync(c =>
+                    var isDuplicate = await _db.Categories.AnyAsync(c =>
                         c.Id != id &&
                         !c.DeleteFlag &&
                         c.Name != null &&
@@ -463,15 +463,13 @@ namespace POSSampleOWN.domain.Features.ProductsCatalog
         {
             try
             {
-                var category = await _db.Categories
-                    .Include(c => c.Products)
-                    .FirstOrDefaultAsync(c => c.Id == id);
+                var category = await _db.Categories.FirstOrDefaultAsync(c => c.Id == id);
 
-                if (category is null)
-                    return ApiResponse<bool>.Fail("Category not found!");
+                if (category is null) return ApiResponse<bool>.Fail("Category not found!");
 
-                if (category.Products != null && category.Products.Any(p => !p.DeleteFlag))
-                    return ApiResponse<bool>.Fail("Cannot delete category with existing products.");
+                var hasProducts = await _db.Products.AnyAsync(p => p.CategoryId == id && !p.DeleteFlag);
+
+                if (hasProducts) return ApiResponse<bool>.Fail("Cannot delete category with existing products.");
 
                 category.DeleteFlag = true;
                 category.UpdatedAt = DateTime.UtcNow;
