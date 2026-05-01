@@ -8,6 +8,7 @@ using System.Text;
 using YaungMel_POS.domain.Features;
 using YaungMel_POS.domain.Middlewares;
 
+
 try
 {
     var builder = WebApplication.CreateBuilder(args);

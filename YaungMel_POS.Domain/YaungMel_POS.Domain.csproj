@@ -8,9 +8,8 @@
 
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-		
-	  <ProjectReference Include="..\POSSampleOWN.database\YaungMel_POS.database.csproj" />
-	  <ProjectReference Include="..\POSSampleOWN.shared\YaungMel_POS.shared.csproj" />
+	  <ProjectReference Include="..\YaungMel_POS.Database\YaungMel_POS.Database.csproj" />
+	  <ProjectReference Include="..\YaungMel_POS.Shared\YaungMel_POS.Shared.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
