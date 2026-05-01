@@ -10,6 +10,7 @@ namespace YaungMel_POS.domain.Features.Point;
 
 [Route("api/points")]
 [ApiController]
+[AllowAnonymous]
 public class PointController : ControllerBase
 {
     private readonly IPointService _service;
@@ -34,27 +35,26 @@ public class PointController : ControllerBase
         var result = await _service.GetAccountsAsync(request);
         return Ok(result);
     }
-    [Authorize]
+
     [HttpGet("accounts/lookup/{userId}")]
     public async Task<IActionResult> LookupAccount(string userId)
     {
-        var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+        //var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
         
-        if (role != "Admin" && role != "Staff")
-        {
-            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            var currentMobile = User.FindFirst(System.Security.Claims.ClaimTypes.MobilePhone)?.Value;
+        //if (role != "Admin" && role != "Staff")
+        //{
+        //    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        //    var currentMobile = User.FindFirst(System.Security.Claims.ClaimTypes.MobilePhone)?.Value;
 
-            if (userId != currentUserId && userId != currentMobile)
-            {
-                return Forbid();
-            }
-        }
+        //    if (userId != currentUserId && userId != currentMobile)
+        //    {
+        //        return Forbid();
+        //    }
+        //}
 
         var result = await _service.LookupAccountAsync(userId);
         return Ok(result);
     }
-    [Authorize]
     [HttpGet("balance-lookup")]
     public async Task<IActionResult> GetBalance([FromQuery] CheckBalanceReqDTO request)
     {
@@ -99,7 +99,6 @@ public class PointController : ControllerBase
         var result = await _service.ClaimRewardAsync(request);
         return Ok(result);
     }
-    [Authorize]
     [HttpGet("accounts/{accountId}/history")]
     public async Task<IActionResult> GetHistory(string accountId)
     {
