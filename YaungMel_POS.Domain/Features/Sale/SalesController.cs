@@ -40,8 +40,8 @@ namespace YaungMel_POS.domain.Features.Sale
             if (!result.IsSuccess)  return BadRequest(result);
             return Ok(result);
         }
-        // GET: api/sales/{id}
-        [HttpGet("{id}")]
+        // GET: api/sales/{voucherCode}
+        [HttpGet("{voucherCode}")]
         public async Task<IActionResult> GetByVoucherCode(string voucherCode)
         {
             var result = await _service.GetSaleByVoucherCodeAsync(voucherCode);

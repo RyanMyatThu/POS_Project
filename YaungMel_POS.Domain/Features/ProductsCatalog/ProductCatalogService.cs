@@ -1,3 +1,5 @@
+using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -7,36 +9,39 @@ using System.Threading.Tasks;
 using YaungMel_POS.database.Data;
 using YaungMel_POS.database.Models;
 using YaungMel_POS.domain.DTOs;
+using YaungMel_POS.Domain.Features.ProductsCatalog;
 using YaungMel_POS.shared.Responses;
 
-namespace YaungMel_POS.domain.Features.ProductsCatalog
+namespace YaungMel_POS.Domain.Features.ProductsCatalog
 {
     public class ProductCatalogService: IProductCatalogService
     {
         private readonly POSDbContext _db;
+        private readonly IPhotoService _photoService;
 
-        public ProductCatalogService(POSDbContext db)
+        public ProductCatalogService(POSDbContext db, IPhotoService photoService)
         {
             _db = db;
+            _photoService = photoService;
         }
 
         private IQueryable<Tbl_Product> ActiveProductQuery => _db.Products
             .AsNoTracking()
             .Where(p => !p.DeleteFlag && p.IsActive);
 
-        #region get Product Pagination
+        #region get product with pagination
         public async Task<Result<ProductListResponseDTO>> GetProductsAsync(int pageNo, int pageSize)
         {
             try
             {
-                var totalItems = await _db.Products
+                var totalItems = await ActiveProductQuery
                     .AsNoTracking()
                     .CountAsync();
 
                  var pageCount = totalItems / pageSize;
                  if (totalItems % pageSize > 0) pageCount++;
 
-                var products = await _db.Products
+                var products = await ActiveProductQuery
                     .AsNoTracking()
                     .OrderByDescending(p => p.Id)
                     .Skip((pageNo - 1) * pageSize)
@@ -47,6 +52,8 @@ namespace YaungMel_POS.domain.Features.ProductsCatalog
                         Name = p.Name,
                         Description = p.Description,
                         Price = p.Price,
+                        ImageId = p.ImageId,
+                        ImageUrl = p.ImageUrl,
                         StockQuantity = p.StockQuantity,
                         CategoryId = p.CategoryId,
                         DeleteFlag = p.DeleteFlag,
@@ -85,6 +92,8 @@ namespace YaungMel_POS.domain.Features.ProductsCatalog
                     Id = product.Id,
                     Name = product.Name,
                     Description = product.Description,
+                    ImageUrl= product.ImageUrl,
+                    ImageId= product.ImageId,
                     Price = product.Price,
                     StockQuantity = product.StockQuantity,
                     CategoryId = product.CategoryId,
@@ -114,6 +123,8 @@ namespace YaungMel_POS.domain.Features.ProductsCatalog
                         Id = p.Id,
                         Name = p.Name,
                         Description = p.Description,
+                        ImageUrl = p.ImageUrl,
+                        ImageId= p.ImageId,
                         Price = p.Price,
                         StockQuantity = p.StockQuantity,
                         CategoryId = p.CategoryId,
@@ -186,6 +197,90 @@ namespace YaungMel_POS.domain.Features.ProductsCatalog
         }
         #endregion
 
+        #region create product with photo upload
+        public async Task<Result<ProductDTO>> CreateProductWithPhotoAsync(CreateProductDTO request, Stream photoStream, string fileName, int userId)
+        {
+            
+                var duplicateProduct = await _db.Products
+                    .AnyAsync(p => p.Name.ToLower() == request.Name.Trim().ToLower() && !p.DeleteFlag);
+
+                if (duplicateProduct) return Result<ProductDTO>.SystemError("Product with the same name already exists.");
+
+                var categoryExists = await _db.Categories
+                    .AnyAsync(c => c.Id == request.CategoryId && !c.DeleteFlag);
+
+                if (!categoryExists) return Result<ProductDTO>.SystemError("Category not found");
+
+                string photoUrl = null;
+                string photoPublicId = null;
+
+                if (photoStream != null)
+                {
+                    var uploadFileName = string.IsNullOrWhiteSpace(fileName) ? request.Name : fileName;
+                    var uploadResult = await _photoService.UploadPhotoAsync(photoStream, uploadFileName);
+
+                    if (uploadResult == null || uploadResult.Error != null || uploadResult.SecureUrl == null)
+                    {
+                        var uploadError = uploadResult?.Error?.Message;
+                        var message = string.IsNullOrWhiteSpace(uploadError)
+                            ? "Photo upload failed."
+                            : $"Photo upload failed: {uploadError}";
+                        return Result<ProductDTO>.SystemError(message);
+                    }
+
+                    photoUrl = uploadResult.SecureUrl.ToString();
+                    photoPublicId = uploadResult.PublicId;
+                }
+            try
+            {
+                var newProduct = new Tbl_Product
+                {
+                    Name = request.Name.Trim(),
+                    Description = request.Description?.Trim(),
+                    Price = request.Price,
+                    StockQuantity = request.StockQuantity,
+                    CategoryId = request.CategoryId,
+                    IsActive = true,
+                    DeleteFlag = false,
+                    CreatedBy = userId,
+                    CreatedAt = DateTime.UtcNow,
+                    ImageUrl = photoUrl,
+                    ImageId = photoPublicId
+                };
+
+                _db.Products.Add(newProduct);
+                await _db.SaveChangesAsync();
+
+                var data = new ProductDTO
+                {
+                    Id = newProduct.Id,
+                    Name = newProduct.Name,
+                    Description = newProduct.Description,
+                    Price = newProduct.Price,
+                    StockQuantity = newProduct.StockQuantity,
+                    CategoryId = newProduct.CategoryId,
+                    DeleteFlag = newProduct.DeleteFlag,
+                    IsActive = newProduct.IsActive,
+                    Version = newProduct.xmin,
+                    ImageUrl = newProduct.ImageUrl,
+                    ImageId = newProduct.ImageId
+                };
+
+                return Result<ProductDTO>.Success(data, "Product created successfully.");
+            }
+            catch (Exception ex)
+            {
+                // if db save fail, rollback cloud upload
+                if (!string.IsNullOrEmpty(photoPublicId))
+                {
+                    await _photoService.DeletePhotoAsync(photoPublicId);
+                }
+
+                return Result<ProductDTO>.SystemError(ex.Message);
+            }
+        }
+        #endregion
+
         #region bulk insert product
         public async Task<Result<List<ProductDTO>>> BulkCreateProductsAsync(List<CreateProductDTO> request, int userId)
         {
@@ -230,7 +325,7 @@ namespace YaungMel_POS.domain.Features.ProductsCatalog
         #endregion
 
         #region update product
-        public async Task<Result<ProductDTO>> UpdateProductAsync(int id, UpdateProductDTO request, int userId)
+        public async Task<Result<ProductDTO>> UpdateProductAsync(int id, UpdateProductDTO request, Stream photoStream, string fileName, int userId)
         {
             try
             {
@@ -267,6 +362,25 @@ namespace YaungMel_POS.domain.Features.ProductsCatalog
 
                 if (request.CategoryId != null)
                     product.CategoryId = request.CategoryId.Value;
+
+                string oldImageId = null;
+                if (photoStream != null)
+                {
+                    var uploadResult = await _photoService.UploadPhotoAsync(photoStream, fileName);
+                    if (uploadResult == null || uploadResult.Error != null || uploadResult.SecureUrl == null)
+                    {
+                        var uploadError = uploadResult?.Error?.Message;
+                        var message = string.IsNullOrWhiteSpace(uploadError)
+                            ? "Photo upload failed."
+                            : $"Photo upload failed: {uploadError}";
+                        return Result<ProductDTO>.SystemError(message);
+                    }
+
+                    oldImageId = product.ImageId;
+
+                    product.ImageUrl = uploadResult.SecureUrl.ToString();
+                    product.ImageId = uploadResult.PublicId;
+                }
 
                 product.UpdatedAt = DateTime.UtcNow;
                 product.UpdatedBy = userId;
@@ -356,7 +470,7 @@ namespace YaungMel_POS.domain.Features.ProductsCatalog
         }
         #endregion
 
-        #region get categories pagination 
+        #region get categories pagination
         public async Task<Result<CategoryListResponseModel>> GetCategoriesAsync(int pageNo, int pageSize)
         {
             try
@@ -433,7 +547,7 @@ namespace YaungMel_POS.domain.Features.ProductsCatalog
                     .AnyAsync(c => c.Name.ToLower() == request.Name.Trim().ToLower() && !c.DeleteFlag);
 
                 if (duplicateCategory) return Result<CategoryDTO>.SystemError("Category with same name exists.");
-    
+
                 var newCategory = new Tbl_Category
                 {
                     Name = request.Name.Trim(),
