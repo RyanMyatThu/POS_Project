@@ -6,7 +6,7 @@ using Scalar.AspNetCore;
 using Serilog;
 using System.Text;
 using YaungMel_POS.Domain.Features;
-using YaungMel_POS.domain.Middlewares;
+using YaungMel_POS.Domain.Middlewares;
 
 
 try

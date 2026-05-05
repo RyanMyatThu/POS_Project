@@ -1,10 +1,6 @@
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
-using Microsoft.AspNetCore.Http.HttpResults;
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using YaungMel_POS.shared.Responses;
+
 
 namespace YaungMel_POS.Domain.Features.ProductsCatalog
 {

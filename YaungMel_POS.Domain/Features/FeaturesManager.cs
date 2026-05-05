@@ -3,18 +3,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using YaungMel_POS.database.Data;
-using YaungMel_POS.domain.Features.Auth;
-using YaungMel_POS.domain.Features.Dashboard;
-using YaungMel_POS.domain.Features.Inventory;
-using YaungMel_POS.domain.Features.Point;
-using YaungMel_POS.domain.Features.Sale;
-using YaungMel_POS.domain.Features.Search;
+using YaungMel_POS.Database.Data;
+using YaungMel_POS.Domain.Features.Auth;
+using YaungMel_POS.Domain.Features.Dashboard;
+using YaungMel_POS.Domain.Features.Inventory;
+using YaungMel_POS.Domain.Features.Point;
+using YaungMel_POS.Domain.Features.Sale;
+using YaungMel_POS.Domain.Features.Search;
 using YaungMel_POS.Domain.Features.ProductsCatalog;
 
 namespace YaungMel_POS.Domain.Features
@@ -28,14 +23,14 @@ namespace YaungMel_POS.Domain.Features
             options.UseNpgsql(builder.Configuration.GetConnectionString("POSConnectionString")));
             var loyaltySettings = builder.Configuration.GetSection("LoyaltyApiSettings");
 
-            // cloudinary config
+            //cloudinary config
             var cloudName = builder.Configuration["Cloudinary:CloudName"]?.Trim();
             var apiKey = builder.Configuration["Cloudinary:ApiKey"]?.Trim();
             var apiSecret = builder.Configuration["Cloudinary:ApiSecret"]?.Trim();
             var acc = new Account(cloudName, apiKey, apiSecret);
             builder.Services.AddSingleton(new Cloudinary(acc));
             builder.Services.AddScoped<IPhotoService, PhotoService>();
-           
+
             //point system
             var pointEnabled = builder.Configuration.GetValue<bool>("Features:PointSystemEnabled");
 
