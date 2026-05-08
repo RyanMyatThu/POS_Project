@@ -143,69 +143,6 @@ namespace YaungMel_POS.Domain.Features.Report
                 }
             </style>";
         }
-
-        private string GenerateAnalyticsHtml(List<SummaryDTO> items, DateTime start, DateTime end)
-        {
-            var sb = new StringBuilder();
-            sb.Append("<html><head>");
-            sb.Append(GetCommonStyles());
-            sb.Append("</head><body>");
-
-            // Header info
-            sb.Append($@"
-            <table class='header-table'>
-                <tr>
-                    <td class='company-name'>YAUNG MEL POS SOLUTIONS</td>
-                    <td class='meta-info'>Date : {DateTime.Now:dd/MM/yyyy HH:mm:ss}</td>
-                </tr>
-            </table>");
-
-            sb.Append("<div class='report-title'>Analytics Sales Report</div>");
-
-            sb.Append($@"
-            <div style='margin-bottom: 15px;'>
-                <span class='bold'>Period:</span> {start:dd/MM/yyyy} - {end:dd/MM/yyyy}
-            </div>");
-
-            // Table
-            sb.Append(@"
-            <table class='data-table'>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th class='text-center'>Transactions</th>
-                        <th>Top Product</th>
-                        <th class='text-right'>Total Amount (MMK)</th>
-                    </tr>
-                </thead>
-                <tbody>");
-
-            foreach (var item in items)
-            {
-                sb.Append($@"
-                <tr>
-                    <td class='border-bottom'>{item.Date:dd/MM/yyyy}</td>
-                    <td class='text-center border-bottom'>{item.TotalSale}</td>
-                    <td class='border-bottom'>{item.TopSaleProductName ?? "-"}</td>
-                    <td class='text-right border-bottom'>{item.TotalAmount:N0}</td>
-                </tr>");
-            }
-
-            var totalRevenue = items.Sum(x => x.TotalAmount);
-            sb.Append($@"
-                </tbody>
-                <tfoot>
-                    <tr class='total-row'>
-                        <td colspan='3' class='text-right'>GRAND TOTAL</td>
-                        <td class='text-right'>{totalRevenue:N0}</td>
-                    </tr>
-                </tfoot>
-            </table>");
-
-            sb.Append("</body></html>");
-            return sb.ToString();
-        }
-
         private string GenerateDailyHtml(SummaryDetailDto detail)
         {
             var sb = new StringBuilder();
