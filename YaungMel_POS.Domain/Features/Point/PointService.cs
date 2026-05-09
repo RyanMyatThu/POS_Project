@@ -218,7 +218,7 @@ public class PointService : IPointService
     {
         try
         {
-            var response = await _client.GetAsync($"rewards/active/YaungMel");
+            var response = await _client.GetAsync("rewards/active");
 
             if (response.IsSuccessStatusCode)
             {
@@ -316,8 +316,12 @@ public class PointService : IPointService
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<AvailableRewardResDTO>();
+                if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                {
+                    return Result<AvailableRewardResDTO>.Success(new AvailableRewardResDTO(), "Reward updated successfully.");
+                }
 
+                var result = await response.Content.ReadFromJsonAsync<AvailableRewardResDTO>();
                 return result != null
                     ? Result<AvailableRewardResDTO>.Success(result, "Reward updated successfully.")
                     : Result<AvailableRewardResDTO>.SystemError("Failed to parse reward data.");
