@@ -18,40 +18,10 @@ namespace YaungMel_POS.Domain.Features.Inventory
             _service = service;
         }
 
-        [HttpPatch("increase-stock")]
-        public async Task<IActionResult> IncreaseStock([FromBody] StockAdjustmentDTO request)
-        {
-            if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
-
-            var result = await _service.IncreaseStockAsync(request.ProductId, request.Quantity);
-
-            return Ok(result);
-        }
-
-        [HttpPatch("reduce-stock")]
-        public async Task<IActionResult> ReduceStock([FromBody] StockAdjustmentDTO request)
-        {
-            if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
-
-            var result = await _service.DecreaseStockAsync(request.ProductId, request.Quantity);
-
-            return Ok(result);
-        }
-
         [HttpGet("low-stock")]
         public async Task<IActionResult> LowStock([FromQuery] int lowStock = 5)
         {
             var result = await _service.GetLowStockAlertsAsync(lowStock);
-            return Ok(result);
-        }
-
-        [HttpPatch("{id}")]
-        public async Task<IActionResult> UpdatePrice([FromBody] PriceUpdateDTO request)
-        {
-            if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
-
-            var result = await _service.UpdatePriceAsync(request.ProductId, request.NewPrice);
-
             return Ok(result);
         }
     }
