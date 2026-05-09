@@ -127,12 +127,10 @@ try
         }
     }
 
-    // Configure the HTTP request pipeline.
-    if (app.Environment.IsDevelopment())
-    {
-        app.MapSwagger("/openapi/{documentName}.json");
-        app.MapScalarApiReference();
-    }
+    // Configure the HTTP request pipeline.    {
+    app.MapSwagger("/openapi/{documentName}.json");
+    app.MapScalarApiReference();
+   
 
 
     app.UseCors("_myAllowSpecificOrigins");
