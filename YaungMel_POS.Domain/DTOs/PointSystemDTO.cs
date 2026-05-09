@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -210,4 +210,13 @@ public class CreateRewardResDTO
     public int PointCost { get; set; }
     public int StockQuantity { get; set; }
     public bool IsActive { get; set; }
+}
+
+public class UpdateRewardReqDTO
+{
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public int? PointCost { get; set; }
+    public int? StockQuantity { get; set; }
+    public bool? IsActive { get; set; }
 }
