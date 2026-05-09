@@ -1,5 +1,5 @@
 using Hangfire;
-using Hangfire.PostgreSql;
+using Hangfire.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -100,26 +100,23 @@ try
     });
 
 
-    //builder.Services.AddHangfire(config =>
-    //{
-    //    config.UsePostgreSqlStorage(options =>
-    //    {
-    //        options.UseNpgsqlConnection(builder.Configuration.GetConnectionString("HangfireConnection"));
-    //    });
-    //});
+    builder.Services.AddHangfire(config =>
+    {
+        config.UseEFCoreStorage(options => options.UseInMemoryDatabase("HangfireDb"));
+    });
 
-    //builder.Services.AddHangfireServer();
+    builder.Services.AddHangfireServer();
 
     var app = builder.Build();
 
-    using (var scope = app.Services.CreateScope())
-    {
-        var db = scope.ServiceProvider.GetRequiredService<POSDbContext>();
+    //using (var scope = app.Services.CreateScope())
+    //{
+    //    var db = scope.ServiceProvider.GetRequiredService<POSDbContext>();
 
-        await db.Database.MigrateAsync();
+    //    await db.Database.MigrateAsync();
 
-        await DatabaseSeeder.SeedAsync(app.Services);
-    }
+    //    await DatabaseSeeder.SeedAsync(app.Services);
+    //}
 
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
@@ -136,11 +133,11 @@ try
     app.UseAuthorization();
     app.MapControllers();
 
-    //app.UseHangfireDashboard("/hangfire");
-    //RecurringJob.AddOrUpdate<ISummaryService>(
-    //"create-daily-summary",
-    //service => service.CreateSummaryAsync(),
-    //"59 23 * * *");
+    app.UseHangfireDashboard("/hangfire");
+    RecurringJob.AddOrUpdate<ISummaryService>(
+    "create-daily-summary",
+    service => service.CreateSummaryAsync(),
+    "59 23 * * *");
 
     app.Run();
 }
