@@ -26,7 +26,7 @@ public class SummaryService : ISummaryService
     {
         try
         {
-            var targetDate = DateTime.SpecifyKind(date.Date, DateTimeKind.Utc);
+            var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
             var now = DateTime.UtcNow;
 
             var salesSummary = await _db.Sales

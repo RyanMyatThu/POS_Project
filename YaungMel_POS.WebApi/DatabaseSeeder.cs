@@ -11,6 +11,11 @@ public static class DatabaseSeeder
         using var scope = serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<POSDbContext>();
 
+        // Clear all tables and restart identities
+        //await db.Database.ExecuteSqlRawAsync(@"
+        //    TRUNCATE TABLE ""Tbl_Summary"", ""Tbl_SaleItem"", ""Tbl_Sale"", ""Tbl_Product"", ""Tbl_Category"", ""Tbl_User"", ""Tbl_User_Token"", ""Tbl_AuditLog"" RESTART IDENTITY CASCADE;
+        //");
+
         var random = new Random();
 
         // ───────────────── USERS ─────────────────
@@ -205,7 +210,7 @@ public static class DatabaseSeeder
 
                 products.Add(new Tbl_Product
                 {
-                    Name = $"{randomProduct} {i}",
+                    Name = $"{randomProduct}",
                     Description = $"Premium {randomCategory.Name} alcoholic beverage",
                     ImageUrl = productImg?.Url,
                     ImageId = productImg?.Id,
