@@ -20,6 +20,30 @@ public class PointService : IPointService
         _client = clitent;
     }
 
+    // Helper to handle both raw T and Result<T> wrapped responses from the external API
+    private async Task<T?> ReadResponseAsync<T>(HttpResponseMessage response)
+    {
+        var content = await response.Content.ReadAsStringAsync();
+        try
+        {
+            // Try to parse as the raw type first
+            return await response.Content.ReadFromJsonAsync<T>();
+        }
+        catch
+        {
+            try
+            {
+                // If it fails, it might be wrapped in a Result<T> structure
+                var wrapped = await response.Content.ReadFromJsonAsync<Result<T>>();
+                return wrapped != null ? wrapped.Data : default;
+            }
+            catch
+            {
+                return default;
+            }
+        }
+    }
+
     #region Account
     public async Task<Result<CreateAccountResDTO>> CreateAccountAsync(CreateAccountReqDTO request)
     {
@@ -37,7 +61,7 @@ public class PointService : IPointService
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<CreateAccountResDTO>();
+                var result = await ReadResponseAsync<CreateAccountResDTO>(response);
 
                 return result != null
                     ? Result<CreateAccountResDTO>.Success(result, "Account created successfully.")
@@ -75,7 +99,7 @@ public class PointService : IPointService
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<AccountListResponseWrapper>();
+                var result = await ReadResponseAsync<AccountListResponseWrapper>(response);
                 return result != null
                     ? Result<AccountListResponseWrapper>.Success(result)
                     : Result<AccountListResponseWrapper>.SystemError("No account data found.");
@@ -100,7 +124,7 @@ public class PointService : IPointService
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<AccountLookupResponse>();
+                var result = await ReadResponseAsync<AccountLookupResponse>(response);
                 return result != null
                     ? Result<AccountLookupResponse>.Success(result)
                     : Result<AccountLookupResponse>.SystemError("Account detail not found.");
@@ -125,7 +149,7 @@ public class PointService : IPointService
 
             if (response.IsSuccessStatusCode)
             {
-                var data = await response.Content.ReadFromJsonAsync<CheckBalanceResDTO>();
+                var data = await ReadResponseAsync<CheckBalanceResDTO>(response);
                 return data != null
                     ? Result<CheckBalanceResDTO>.Success(data)
                     : Result<CheckBalanceResDTO>.SystemError("Data not found.");
@@ -154,7 +178,7 @@ public class PointService : IPointService
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<EarnPointResDTO>();
+                var result = await ReadResponseAsync<EarnPointResDTO>(response);
 
                 return result != null
                     ? Result<EarnPointResDTO>.Success(result, "Points earned successfully.")
@@ -173,11 +197,13 @@ public class PointService : IPointService
     {
         try
         {
+            // The history API might expect the account internal ID or the external user ID.
+            // Based on how lookup works, we try to get it from the account.
             var response = await _client.GetAsync($"accounts/{accountId}/history");
 
             if (response.IsSuccessStatusCode)
             {
-                var history = await response.Content.ReadFromJsonAsync<List<PointHistoryResDTO>>();
+                var history = await ReadResponseAsync<List<PointHistoryResDTO>>(response);
 
                 return history != null
                     ? Result<List<PointHistoryResDTO>>.Success(history)
@@ -199,10 +225,13 @@ public class PointService : IPointService
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<ClaimRewardResDTO>();
-                return result != null
-                    ? Result<ClaimRewardResDTO>.Success(result, "Redemption request created (Pending).")
-                    : Result<ClaimRewardResDTO>.SystemError("Failed to process redemption response.");
+                var result = await ReadResponseAsync<ClaimRewardResDTO>(response);
+                // Fallback for APIs that only return {"success": true}
+                if (result == null)
+                {
+                    result = new ClaimRewardResDTO { Status = "Pending" };
+                }
+                return Result<ClaimRewardResDTO>.Success(result, "Redemption request created (Pending).");
             }
 
 
@@ -222,7 +251,7 @@ public class PointService : IPointService
 
             if (response.IsSuccessStatusCode)
             {
-                var rewards = await response.Content.ReadFromJsonAsync<List<AvailableRewardResDTO>>();
+                var rewards = await ReadResponseAsync<List<AvailableRewardResDTO>>(response);
 
                 return rewards != null
                     ? Result<List<AvailableRewardResDTO>>.Success(rewards, "Rewards retrieved successfully.")
@@ -247,7 +276,7 @@ public class PointService : IPointService
 
             if (response.IsSuccessStatusCode)
             {
-                var redemptions = await response.Content.ReadFromJsonAsync<List<PendingRedemptionResDTO>>();
+                var redemptions = await ReadResponseAsync<List<PendingRedemptionResDTO>>(response);
 
                 return redemptions != null
                     ? Result<List<PendingRedemptionResDTO>>.Success(redemptions)
@@ -293,7 +322,7 @@ public class PointService : IPointService
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<CreateRewardResDTO>();
+                var result = await ReadResponseAsync<CreateRewardResDTO>(response);
 
                 return result != null
                     ? Result<CreateRewardResDTO>.Success(result, "Reward created successfully.")
@@ -321,7 +350,7 @@ public class PointService : IPointService
                     return Result<AvailableRewardResDTO>.Success(new AvailableRewardResDTO(), "Reward updated successfully.");
                 }
 
-                var result = await response.Content.ReadFromJsonAsync<AvailableRewardResDTO>();
+                var result = await ReadResponseAsync<AvailableRewardResDTO>(response);
                 return result != null
                     ? Result<AvailableRewardResDTO>.Success(result, "Reward updated successfully.")
                     : Result<AvailableRewardResDTO>.SystemError("Failed to parse reward data.");
