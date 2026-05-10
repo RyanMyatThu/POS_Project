@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Search as SearchIcon, Filter, RotateCcw, Boxes } from "lucide-react";
 import { searchApi, categoriesApi } from "@/lib/api";
-import type { CategoryDTO, ProductDTO, SearchRequestDTO, PageSettingDTO } from "@/lib/types";
+import type { CategoryDTO, ProductDTO, SearchRequestDTO, PageSettingDTO, ProductSearchResponseModel } from "@/lib/types";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -45,12 +45,12 @@ export default function SearchPage() {
         }
         if (searchRes.isSuccess && searchRes.data) {
           // Safeguard: handle both array and paged object formats
-          const rawData = searchRes.data as any;
-          const items = Array.isArray(rawData) ? rawData : (rawData?.items || []);
+          const data = searchRes.data as ProductSearchResponseModel | ProductDTO[];
+          const items = Array.isArray(data) ? data : (data?.items || []);
           setResults(items);
           
-          if (rawData?.pageSetting) {
-            setPageSetting(rawData.pageSetting);
+          if (!Array.isArray(data) && data?.pageSetting) {
+            setPageSetting(data.pageSetting);
           }
         }
         else toast("error", searchRes.message || "Search failed");
@@ -75,12 +75,12 @@ export default function SearchPage() {
     try {
       const res = await searchApi.search(updatedFilters);
       if (res.isSuccess && res.data) {
-        const rawData = res.data as any;
-        const items = Array.isArray(rawData) ? rawData : (rawData?.items || []);
+        const data = res.data as ProductSearchResponseModel | ProductDTO[];
+        const items = Array.isArray(data) ? data : (data?.items || []);
         setResults(items);
         
-        if (rawData?.pageSetting) {
-          setPageSetting(rawData.pageSetting);
+        if (!Array.isArray(data) && data?.pageSetting) {
+          setPageSetting(data.pageSetting);
         }
       }
       else toast("error", res.message || "Search failed");
@@ -97,12 +97,12 @@ export default function SearchPage() {
     try {
       const res = await searchApi.search(initialFilters);
       if (res.isSuccess && res.data) {
-        const rawData = res.data as any;
-        const items = Array.isArray(rawData) ? rawData : (rawData?.items || []);
+        const data = res.data as ProductSearchResponseModel | ProductDTO[];
+        const items = Array.isArray(data) ? data : (data?.items || []);
         setResults(items);
         
-        if (rawData?.pageSetting) {
-          setPageSetting(rawData.pageSetting);
+        if (!Array.isArray(data) && data?.pageSetting) {
+          setPageSetting(data.pageSetting);
         }
       }
     } catch (err) { 

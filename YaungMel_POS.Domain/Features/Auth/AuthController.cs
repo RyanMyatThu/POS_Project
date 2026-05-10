@@ -129,4 +129,18 @@ public class AuthController : ControllerBase
 
         return Ok(result);
     }
+
+    [Authorize(Roles = "Admin")]
+    [HttpGet("users")]
+    public async Task<IActionResult> GetAllUsers()
+    {
+        var result = await _registerService.GetAllAsync();
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
 }

@@ -241,6 +241,33 @@ namespace YaungMel_POS.Domain.Features.Auth
             }
         }
         #endregion
+        
+        #region get all users
+        public async Task<Result<List<UserDTO>>> GetAllAsync()
+        {
+            try
+            {
+                var users = await _context.Users
+                    .Where(u => !u.DeleteFlag)
+                    .OrderByDescending(u => u.CreatedAt)
+                    .Select(u => new UserDTO
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        MobileNum = u.MobileNum,
+                        Role = u.Role,
+                        CreatedAt = u.CreatedAt
+                    })
+                    .ToListAsync();
+
+                return Result<List<UserDTO>>.Success(users, "Users retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return Result<List<UserDTO>>.SystemError($"An error occurred while retrieving users: {ex.Message}");
+            }
+        }
+        #endregion
 
     }
 }

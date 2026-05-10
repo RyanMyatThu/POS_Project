@@ -36,6 +36,7 @@ import type {
   TopProductDTO,
   UpdateProductDTO,
   UpdateRewardReqDTO,
+  UserDTO,
   UserResponse,
 } from "./types";
 
@@ -112,6 +113,9 @@ export const authApi = {
 
   deleteUser: (id: number) =>
     api.delete<ApiResponse<object>>(`/api/auth/users/${id}`).then(unwrap),
+
+  getUsers: () =>
+    api.get<ApiResponse<UserDTO[]>>("/api/auth/users").then(unwrap),
 };
 
 // Helper function

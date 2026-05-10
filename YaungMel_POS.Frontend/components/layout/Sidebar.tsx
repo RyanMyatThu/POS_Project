@@ -56,7 +56,7 @@ const navGroups: NavGroup[] = [
         label: "Dashboard",
         href: "/dashboard",
         icon: <LayoutDashboard size={20} />,
-        roles: ["Admin"],
+        roles: ["Admin", "Staff"],
       },
     ],
   },

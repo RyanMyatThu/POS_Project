@@ -66,4 +66,13 @@ namespace YaungMel_POS.Domain.DTOs
         [MinLength(6)]
         public string NewPassword { get; set; } = string.Empty;
     }
+
+    public class UserDTO
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string MobileNum { get; set; } = string.Empty;
+        public Tbl_User.UserRole Role { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
 }

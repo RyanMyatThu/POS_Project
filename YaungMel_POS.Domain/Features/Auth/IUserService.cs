@@ -10,6 +10,7 @@ namespace YaungMel_POS.Domain.Features.Auth
         Task<Result<UserResponse>> UpdateAsync(int id, UserUpdateRequest request, int currentUserId);
         Task<Result<UserResponse>> DeleteAsync(int id);
         Task<Result<UserResponse>> ChangePasswordAsync(int id, ChangePasswordRequest request, int currentUserId);
+        Task<Result<List<UserDTO>>> GetAllAsync();
         bool IsValidMobileNum(string mobileNum);
     }
 }

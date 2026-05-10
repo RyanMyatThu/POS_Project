@@ -34,6 +34,14 @@ export interface UserResponse {
   userId?: number;
 }
 
+export interface UserDTO {
+  id: number;
+  name: string;
+  mobileNum: string;
+  role: UserRole;
+  createdAt: string;
+}
+
 // ─── API Response Wrapper ────────────────────────────────
 export interface ApiResponse<T> {
   isSuccess: boolean;

@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/lib/auth-context";
-import { LogOut, Menu, PlusCircle } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface TopBarProps {
@@ -18,11 +18,6 @@ export function TopBar({ onMenuClick }: TopBarProps) {
   const handleLogout = () => {
     logout();
     router.push("/login");
-  };
-
-  const handleShortcutMenu = () => {
-    // Logic to open shortcut menu modal
-    console.log("Open shortcut menu");
   };
 
   const roleBadgeVariant =
@@ -46,14 +41,6 @@ export function TopBar({ onMenuClick }: TopBarProps) {
 
       {/* Right: User info + Theme + Logout */}
       <div className="flex items-center gap-3">
-        <button
-          onClick={handleShortcutMenu}
-          className="p-2 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
-          title="Shortcut Menu"
-        >
-          <PlusCircle size={20} />
-        </button>
-
         <ThemeToggle />
 
         {user && (
