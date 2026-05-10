@@ -243,13 +243,12 @@ public static class DatabaseSeeder
 
                 for (int s = 0; s < saleCountPerDay; s++)
                 {
-                    var createdDate = DateTime.UtcNow.Date.AddDays(-day);
-
+                    var saleTime = createdDate.AddHours(random.Next(8, 20)).AddMinutes(s * 5).AddSeconds(random.Next(60));
                     var sale = new Tbl_Sale
                     {
-                        VoucherCode = $"VC-{createdDate:yyyyMMdd}-{s + 1:D3}",
+                        VoucherCode = $"YM-{saleTime:yyyyMMddHHmmss}",
                         CreatedBy = staffUser.Id,
-                        CreatedAt = createdDate,
+                        CreatedAt = saleTime,
                         TotalPrice = 0
                     };
 

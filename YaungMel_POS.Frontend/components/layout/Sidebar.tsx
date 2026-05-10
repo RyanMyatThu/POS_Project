@@ -7,6 +7,7 @@ import {
   ClipboardList,
   Gift,
   LayoutDashboard,
+  LogOut,
   Package,
   Receipt,
   Search,
@@ -18,6 +19,7 @@ import {
   Warehouse,
   X,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -161,7 +163,8 @@ export function Sidebar({
   onMobileClose,
 }: SidebarProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, logout } = useAuth();
   const userRole = user?.role || "";
 
   const [favoriteItems, setFavoriteItems] = useState<FavoritesItem[]>(favorites);
@@ -297,7 +300,30 @@ export function Sidebar({
       </nav>
 
       {/* Collapse toggle (desktop) */}
-      <div className="hidden lg:block border-t border-[var(--border-primary)] p-3">
+      <div className="border-t border-[var(--border-primary)] p-3 space-y-1">
+        <button
+          onClick={() => {
+            logout();
+            router.push("/login");
+          }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[var(--accent-danger)] hover:bg-[var(--accent-danger-soft)] transition-colors cursor-pointer"
+        >
+          <LogOut size={18} />
+          <AnimatePresence mode="wait">
+            {!collapsed && (
+              <motion.span
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="whitespace-nowrap"
+              >
+                Logout
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
+
+        <div className="hidden lg:block">
         <button
           onClick={onToggle}
           className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
