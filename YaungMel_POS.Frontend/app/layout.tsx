@@ -9,6 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://yaung-mel-pos.vercel.app"),
   title: {
     default: "Yaung Mel — Point of Sale System",
     template: "%s | Yaung Mel",
@@ -27,21 +28,21 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://pos.yaungmel.com",
+    url: "https://yaung-mel-pos.vercel.app",
     siteName: "Yaung Mel POS",
     title: "Yaung Mel — Modern Point of Sale",
     description: "Streamline your business with Yaung Mel's advanced POS and loyalty system.",
     images: [
       {
         url: "/logo.svg",
-        width: 800,
-        height: 800,
+        width: 1200,
+        height: 630,
         alt: "Yaung Mel POS Logo",
       },
     ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Yaung Mel — Modern POS",
     description: "Streamline your business with Yaung Mel's advanced POS.",
     creator: "@yaungmel",

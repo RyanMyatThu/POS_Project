@@ -50,7 +50,7 @@ namespace YaungMel_POS.Domain.Features.Search
            return categories;
         }
 
-        public async Task<List<ProductDTO>> SearchProductsAsync(SearchProductRequestDTO searchRequest)
+        public async Task<ProductSearchResponseDTO> SearchProductsAsync(SearchProductRequestDTO searchRequest)
         {
             var query = ActiveProductQuery.AsQueryable();
 
@@ -86,6 +86,9 @@ namespace YaungMel_POS.Domain.Features.Search
                 _ => query
             };
 
+            var totalCount = await query.CountAsync();
+            var pageCount = (int)Math.Ceiling((double)totalCount / searchRequest.PageSize);
+
             var products = await query
                 .Skip((searchRequest.PageNumber - 1) * searchRequest.PageSize)
                 .Take(searchRequest.PageSize)
@@ -95,12 +98,24 @@ namespace YaungMel_POS.Domain.Features.Search
                     Name = p.Name,
                     Description = p.Description,
                     Price = p.Price,
+                    PriceFormatted = p.Price.ToString("N0") + " MMK",
                     StockQuantity = p.StockQuantity,
                     CategoryId = p.CategoryId,
-                    DeleteFlag = p.DeleteFlag
+                    DeleteFlag = p.DeleteFlag,
+                    ImageUrl = p.ImageUrl,
+                    IsActive = p.IsActive,
                 }).ToListAsync();
 
-            return products;
+            return new ProductSearchResponseDTO
+            {
+                Items = products,
+                PageSetting = new PageSettingDTO
+                {
+                    PageNo = searchRequest.PageNumber,
+                    PageSize = searchRequest.PageSize,
+                    PageCount = pageCount
+                }
+            };
         }
 
         

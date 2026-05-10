@@ -1,4 +1,4 @@
-﻿namespace YaungMel_POS.Domain.DTOs
+namespace YaungMel_POS.Domain.DTOs
 {
     public class SearchDTO
     {
@@ -38,5 +38,11 @@
         public bool IsDescending { get; set; } = false;
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 20;
+    }
+
+    public class ProductSearchResponseDTO
+    {
+        public List<ProductDTO> Items { get; set; } = new();
+        public PageSettingDTO PageSetting { get; set; } = new();
     }
 }

@@ -263,16 +263,16 @@ export interface AccountLookupResponse {
 
 // ─── Search ──────────────────────────────────────────────
 export interface SearchRequestDTO {
-  name?: string;
-  categoryId?: number;
-  minPrice?: number;
-  maxPrice?: number;
-  minStockQuantity?: number;
-  maxStockQuantity?: number;
-  sortBy?: string;
-  isDescending?: boolean;
-  pageNumber?: number;
-  pageSize?: number;
+  Name?: string;
+  CategoryId?: number;
+  MinPrice?: number;
+  MaxPrice?: number;
+  MinStockQuantity?: number;
+  MaxStockQuantity?: number;
+  SortBy?: string;
+  IsDescending?: boolean;
+  PageNumber?: number;
+  PageSize?: number;
 }
 
 export interface SearchCategoryRequestDTO {

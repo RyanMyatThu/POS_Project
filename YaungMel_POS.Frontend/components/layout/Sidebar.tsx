@@ -135,6 +135,7 @@ interface FavoritesItem {
   label: string;
   href: string;
   icon: ReactNode;
+  roles?: string[];
 }
 
 const favorites: FavoritesItem[] = [
@@ -142,6 +143,7 @@ const favorites: FavoritesItem[] = [
     label: "Reports",
     href: "/reports",
     icon: <ClipboardList size={20} />,
+    roles: ["Admin", "Staff"],
   },
 ];
 
@@ -193,7 +195,9 @@ export function Sidebar({
         <h3 className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest mb-2 px-3">
           Favorites
         </h3>
-        {favoriteItems.map((fav) => (
+        {favoriteItems
+          .filter((fav) => !fav.roles || fav.roles.includes(userRole))
+          .map((fav) => (
           <Link
             key={fav.href}
             href={fav.href}

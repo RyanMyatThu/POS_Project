@@ -106,14 +106,15 @@ export default function InventoryPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[var(--border-primary)] bg-[var(--bg-secondary)]">
-                    {["Product", "Price", "Stock", "Status", "Actions"].map((h) => (
+                    {["#", "Product", "Price", "Stock", "Status", "Actions"].map((h) => (
                       <th key={h} className="text-left py-3 px-4 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider last:text-right">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {paginated.map((p) => (
+                  {paginated.map((p, index) => (
                     <tr key={p.id} className="border-b border-[var(--border-primary)] last:border-0 hover:bg-[var(--bg-hover)] transition-colors">
+                      <td className="py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">{(currentPage - 1) * pageSize + index + 1}</td>
                       <td className="py-3 px-4 text-sm font-medium text-[var(--text-primary)]">{p.name}</td>
                       <td className="py-3 px-4 text-sm font-mono text-[var(--text-primary)]">{p.priceFormatted} MMK</td>
                       <td className="py-3 px-4">{stockBadge(p.stockQuantity)}</td>

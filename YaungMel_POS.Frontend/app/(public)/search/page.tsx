@@ -14,9 +14,9 @@ import { toast } from "@/components/ui/Toast";
 import { Pagination } from "@/components/ui/Pagination";
 
 const initialFilters: SearchRequestDTO = {
-  name: "", categoryId: undefined, minPrice: undefined, maxPrice: undefined,
-  minStockQuantity: undefined, maxStockQuantity: undefined,
-  sortBy: "Name", isDescending: false, pageNumber: 1, pageSize: 20,
+  Name: "", CategoryId: undefined, MinPrice: undefined, MaxPrice: undefined,
+  MinStockQuantity: undefined, MaxStockQuantity: undefined,
+  SortBy: "name", IsDescending: false, PageNumber: 1, PageSize: 20,
 };
 
 export default function SearchPage() {
@@ -44,30 +44,47 @@ export default function SearchPage() {
           setCategories(sortedCategories);
         }
         if (searchRes.isSuccess && searchRes.data) {
-          const sortedResults = [...searchRes.data.items].sort((a, b) => a.name.localeCompare(b.name));
+          // Safeguard: handle both array and paged object formats
+          const rawData = searchRes.data as any;
+          const items = Array.isArray(rawData) ? rawData : (rawData?.items || []);
+          const sortedResults = [...items].sort((a: any, b: any) => a.name.localeCompare(b.name));
           setResults(sortedResults);
-          setPageSetting(searchRes.data.pageSetting);
+          
+          if (rawData?.pageSetting) {
+            setPageSetting(rawData.pageSetting);
+          }
         }
         else toast("error", searchRes.message || "Search failed");
-      } catch { toast("error", "Failed to load search tools"); }
+      } catch (err) { 
+        console.error("Load error:", err);
+        toast("error", "Failed to load search tools"); 
+      }
       finally { setIsLoading(false); }
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
 
   const handleSearch = async (page: number = 1) => {
-    const updatedFilters = { ...filters, pageNumber: page };
+    const updatedFilters = { ...filters, PageNumber: page };
     setFilters(updatedFilters);
     setIsSearching(true);
     try {
       const res = await searchApi.search(updatedFilters);
       if (res.isSuccess && res.data) {
-        const sortedResults = [...res.data.items].sort((a, b) => a.name.localeCompare(b.name));
+        const rawData = res.data as any;
+        const items = Array.isArray(rawData) ? rawData : (rawData?.items || []);
+        const sortedResults = [...items].sort((a: any, b: any) => a.name.localeCompare(b.name));
         setResults(sortedResults);
-        setPageSetting(res.data.pageSetting);
+        
+        if (rawData?.pageSetting) {
+          setPageSetting(rawData.pageSetting);
+        }
       }
       else toast("error", res.message || "Search failed");
-    } catch { toast("error", "Search request failed"); }
+    } catch (err) { 
+      console.error("Search error:", err);
+      toast("error", "Search request failed"); 
+    }
     finally { setIsSearching(false); }
   };
 
@@ -77,11 +94,19 @@ export default function SearchPage() {
     try {
       const res = await searchApi.search(initialFilters);
       if (res.isSuccess && res.data) {
-        const sortedResults = [...res.data.items].sort((a, b) => a.name.localeCompare(b.name));
+        const rawData = res.data as any;
+        const items = Array.isArray(rawData) ? rawData : (rawData?.items || []);
+        const sortedResults = [...items].sort((a: any, b: any) => a.name.localeCompare(b.name));
         setResults(sortedResults);
-        setPageSetting(res.data.pageSetting);
+        
+        if (rawData?.pageSetting) {
+          setPageSetting(rawData.pageSetting);
+        }
       }
-    } catch { toast("error", "Failed to reset search"); }
+    } catch (err) { 
+      console.error("Reset error:", err);
+      toast("error", "Failed to reset search"); 
+    }
     finally { setIsSearching(false); }
   };
 
@@ -98,27 +123,27 @@ export default function SearchPage() {
         <Card padding="lg">
           <CardHeader title="Search Filters" subtitle="Build a product query and fetch matching items." action={<Filter size={18} className="text-[var(--text-tertiary)]" />} />
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            <Input label="Product Name" placeholder="Search by name" value={filters.name || ""} onChange={(e) => setFilters((prev) => ({ ...prev, name: e.target.value }))} icon={<SearchIcon size={16} />} />
+            <Input label="Product Name" placeholder="Search by name" value={filters.Name || ""} onChange={(e) => setFilters((prev) => ({ ...prev, Name: e.target.value }))} icon={<SearchIcon size={16} />} />
             <div>
               <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Category</label>
-              <select value={filters.categoryId ?? ""} onChange={(e) => setFilters((prev) => ({ ...prev, categoryId: e.target.value ? Number(e.target.value) : undefined }))} className="w-full px-4 py-2.5 text-sm rounded-xl bg-[var(--bg-input)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]">
+              <select value={filters.CategoryId ?? ""} onChange={(e) => setFilters((prev) => ({ ...prev, CategoryId: e.target.value ? Number(e.target.value) : undefined }))} className="w-full px-4 py-2.5 text-sm rounded-xl bg-[var(--bg-input)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]">
                 <option value="">All Categories</option>
                 {categories.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
               </select>
             </div>
-            <Input label="Min Price" type="number" placeholder="0" value={filters.minPrice ?? ""} onChange={(e) => setFilters((prev) => ({ ...prev, minPrice: e.target.value ? Number(e.target.value) : undefined }))} />
-            <Input label="Max Price" type="number" placeholder="10000" value={filters.maxPrice ?? ""} onChange={(e) => setFilters((prev) => ({ ...prev, maxPrice: e.target.value ? Number(e.target.value) : undefined }))} />
-            <Input label="Min Stock" type="number" placeholder="0" value={filters.minStockQuantity ?? ""} onChange={(e) => setFilters((prev) => ({ ...prev, minStockQuantity: e.target.value ? Number(e.target.value) : undefined }))} />
-            <Input label="Max Stock" type="number" placeholder="100" value={filters.maxStockQuantity ?? ""} onChange={(e) => setFilters((prev) => ({ ...prev, maxStockQuantity: e.target.value ? Number(e.target.value) : undefined }))} />
+            <Input label="Min Price" type="number" placeholder="0" value={filters.MinPrice ?? ""} onChange={(e) => setFilters((prev) => ({ ...prev, MinPrice: e.target.value ? Number(e.target.value) : undefined }))} />
+            <Input label="Max Price" type="number" placeholder="10000" value={filters.MaxPrice ?? ""} onChange={(e) => setFilters((prev) => ({ ...prev, MaxPrice: e.target.value ? Number(e.target.value) : undefined }))} />
+            <Input label="Min Stock" type="number" placeholder="0" value={filters.MinStockQuantity ?? ""} onChange={(e) => setFilters((prev) => ({ ...prev, MinStockQuantity: e.target.value ? Number(e.target.value) : undefined }))} />
+            <Input label="Max Stock" type="number" placeholder="100" value={filters.MaxStockQuantity ?? ""} onChange={(e) => setFilters((prev) => ({ ...prev, MaxStockQuantity: e.target.value ? Number(e.target.value) : undefined }))} />
             <div>
               <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Sort By</label>
-              <select value={filters.sortBy ?? "Name"} onChange={(e) => setFilters((prev) => ({ ...prev, sortBy: e.target.value }))} className="w-full px-4 py-2.5 text-sm rounded-xl bg-[var(--bg-input)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]">
-                <option value="Name">Name</option><option value="Price">Price</option><option value="CreatedAt">Created Date</option>
+              <select value={filters.SortBy ?? "name"} onChange={(e) => setFilters((prev) => ({ ...prev, SortBy: e.target.value }))} className="w-full px-4 py-2.5 text-sm rounded-xl bg-[var(--bg-input)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]">
+                <option value="name">Name</option><option value="price">Price</option><option value="createdDate">Created Date</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Order</label>
-              <select value={filters.isDescending ? "desc" : "asc"} onChange={(e) => setFilters((prev) => ({ ...prev, isDescending: e.target.value === "desc" }))} className="w-full px-4 py-2.5 text-sm rounded-xl bg-[var(--bg-input)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]">
+              <select value={filters.IsDescending ? "desc" : "asc"} onChange={(e) => setFilters((prev) => ({ ...prev, IsDescending: e.target.value === "desc" }))} className="w-full px-4 py-2.5 text-sm rounded-xl bg-[var(--bg-input)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]">
                 <option value="asc">Ascending</option><option value="desc">Descending</option>
               </select>
             </div>
@@ -130,6 +155,22 @@ export default function SearchPage() {
         </Card>
 
         <Card padding="none">
+          <div className="flex flex-col sm:flex-row justify-between items-center p-4 gap-4 border-b border-[var(--border-primary)] bg-[var(--bg-secondary)] rounded-t-2xl">
+            <div className="flex items-center gap-2">
+              <Boxes size={18} className="text-[var(--accent-primary)]" />
+              <p className="text-sm font-medium text-[var(--text-primary)]">
+                {isLoading ? "Searching..." : pageSetting.pageCount > 0 ? `Page ${pageSetting.pageNo} of ${pageSetting.pageCount}` : `${results.length} items found`}
+              </p>
+            </div>
+            {!isLoading && pageSetting.pageCount > 1 && (
+              <Pagination
+                currentPage={pageSetting.pageNo}
+                totalPages={pageSetting.pageCount}
+                onPageChange={(page) => void handleSearch(page)}
+              />
+            )}
+          </div>
+
           {isLoading ? (<div className="p-6"><SkeletonTable rows={6} /></div>) : results.length === 0 ? (
             <div className="py-16 text-center">
               <Boxes size={48} className="mx-auto mb-3 text-[var(--text-tertiary)] opacity-50" />
@@ -140,20 +181,23 @@ export default function SearchPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[var(--border-primary)] bg-[var(--bg-secondary)]">
-                    {["Product", "Category", "Price", "Stock", "Status"].map((h) => (
+                    {["No.", "Product", "Category", "Price", "Stock", "Status"].map((h) => (
                       <th key={h} className="text-left py-3 px-4 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {results.map((product) => (
+                  {results.map((product, index) => (
                     <tr key={product.id} className="border-b border-[var(--border-primary)] last:border-0 hover:bg-[var(--bg-hover)] transition-colors">
+                      <td className="py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
+                        {(pageSetting.pageNo - 1) * pageSetting.pageSize + index + 1}
+                      </td>
                       <td className="py-3 px-4">
                         <p className="text-sm font-medium text-[var(--text-primary)]">{product.name}</p>
                         {product.description && <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{product.description}</p>}
                       </td>
                       <td className="py-3 px-4"><Badge variant="info">{getCategoryName(product.categoryId)}</Badge></td>
-                      <td className="py-3 px-4 text-sm font-mono text-[var(--text-primary)]">${product.price.toFixed(2)}</td>
+                      <td className="py-3 px-4 text-sm font-mono text-[var(--text-primary)]">{product.priceFormatted || `${product.price.toLocaleString()} MMK`}</td>
                       <td className="py-3 px-4"><Badge variant={product.stockQuantity <= 5 ? "warning" : "success"}>{product.stockQuantity}</Badge></td>
                       <td className="py-3 px-4"><Badge variant={product.isActive ? "success" : "danger"}>{product.isActive ? "Active" : "Inactive"}</Badge></td>
                     </tr>
@@ -163,7 +207,7 @@ export default function SearchPage() {
             </div>
           )}
 
-          {/* Pagination */}
+          {/* Bottom Pagination */}
           {!isLoading && pageSetting.pageCount > 1 && (
             <div className="p-4 border-t border-[var(--border-primary)] bg-[var(--bg-secondary)] rounded-b-2xl">
               <Pagination
