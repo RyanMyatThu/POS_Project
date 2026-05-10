@@ -39,9 +39,13 @@ export default function SearchPage() {
           categoriesApi.getAll(),
           searchApi.search(initialFilters)
         ]);
-        if (categoryRes.isSuccess && categoryRes.data) setCategories(categoryRes.data);
+        if (categoryRes.isSuccess && categoryRes.data) {
+          const sortedCategories = [...categoryRes.data].sort((a, b) => a.name.localeCompare(b.name));
+          setCategories(sortedCategories);
+        }
         if (searchRes.isSuccess && searchRes.data) {
-          setResults(searchRes.data.items);
+          const sortedResults = [...searchRes.data.items].sort((a, b) => a.name.localeCompare(b.name));
+          setResults(sortedResults);
           setPageSetting(searchRes.data.pageSetting);
         }
         else toast("error", searchRes.message || "Search failed");
@@ -58,7 +62,8 @@ export default function SearchPage() {
     try {
       const res = await searchApi.search(updatedFilters);
       if (res.isSuccess && res.data) {
-        setResults(res.data.items);
+        const sortedResults = [...res.data.items].sort((a, b) => a.name.localeCompare(b.name));
+        setResults(sortedResults);
         setPageSetting(res.data.pageSetting);
       }
       else toast("error", res.message || "Search failed");
@@ -72,7 +77,8 @@ export default function SearchPage() {
     try {
       const res = await searchApi.search(initialFilters);
       if (res.isSuccess && res.data) {
-        setResults(res.data.items);
+        const sortedResults = [...res.data.items].sort((a, b) => a.name.localeCompare(b.name));
+        setResults(sortedResults);
         setPageSetting(res.data.pageSetting);
       }
     } catch { toast("error", "Failed to reset search"); }

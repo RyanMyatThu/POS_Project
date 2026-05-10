@@ -36,8 +36,16 @@ export default function ProductsPage() {
     setIsLoading(true);
     try {
       const [prodRes, catRes] = await Promise.all([productsApi.getAll(), categoriesApi.getAll()]);
-      if (prodRes.isSuccess && prodRes.data) setProducts(prodRes.data.filter((p) => !p.deleteFlag));
-      if (catRes.isSuccess && catRes.data) setCategories(catRes.data);
+      if (prodRes.isSuccess && prodRes.data) {
+        const sortedProducts = prodRes.data
+          .filter((p) => !p.deleteFlag)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setProducts(sortedProducts);
+      }
+      if (catRes.isSuccess && catRes.data) {
+        const sortedCategories = [...catRes.data].sort((a, b) => a.name.localeCompare(b.name));
+        setCategories(sortedCategories);
+      }
     } catch { toast("error", "Failed to load products"); }
     finally { setIsLoading(false); }
   }, []);

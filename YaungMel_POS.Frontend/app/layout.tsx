@@ -33,21 +33,25 @@ export const metadata: Metadata = {
     description: "Streamline your business with Yaung Mel's advanced POS and loyalty system.",
     images: [
       {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Yaung Mel POS Dashboard",
+        url: "/logo.svg",
+        width: 800,
+        height: 800,
+        alt: "Yaung Mel POS Logo",
       },
     ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Yaung Mel — Modern POS",
     description: "Streamline your business with Yaung Mel's advanced POS.",
     creator: "@yaungmel",
-    images: ["/og-image.png"],
+    images: ["/logo.svg"],
   },
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+  icons: {
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
+    apple: "/logo.svg",
+  },
   robots: {
     index: true,
     follow: true,

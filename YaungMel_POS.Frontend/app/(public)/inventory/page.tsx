@@ -33,7 +33,12 @@ export default function InventoryPage() {
     setIsLoading(true);
     try {
       const res = await productsApi.getAll();
-      if (res.isSuccess && res.data) setProducts(res.data.filter((p) => !p.deleteFlag));
+      if (res.isSuccess && res.data) {
+        const sortedProducts = res.data
+          .filter((p) => !p.deleteFlag)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setProducts(sortedProducts);
+      }
     } catch { toast("error", "Failed to load"); }
     finally { setIsLoading(false); }
   }, []);

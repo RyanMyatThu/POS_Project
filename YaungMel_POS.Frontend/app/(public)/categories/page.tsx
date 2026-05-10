@@ -32,7 +32,10 @@ export default function CategoriesPage() {
     setIsLoading(true);
     try {
       const res = await categoriesApi.getAll();
-      if (res.isSuccess && res.data) setCategories(res.data);
+      if (res.isSuccess && res.data) {
+        const sortedCategories = [...res.data].sort((a, b) => a.name.localeCompare(b.name));
+        setCategories(sortedCategories);
+      }
     } catch { toast("error", "Failed to load categories"); }
     finally { setIsLoading(false); }
   }, []);

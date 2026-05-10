@@ -39,9 +39,15 @@ export default function POSPage() {
     try {
       const [pRes, cRes] = await Promise.all([productsApi.getAvailable(), categoriesApi.getAll()]);
       if (pRes.isSuccess && pRes.data) {
-        setProducts(pRes.data.filter(p => p.isActive && !p.deleteFlag));
+        const sortedProducts = pRes.data
+          .filter(p => p.isActive && !p.deleteFlag)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setProducts(sortedProducts);
       }
-      if (cRes.isSuccess && cRes.data) setCategories(cRes.data);
+      if (cRes.isSuccess && cRes.data) {
+        const sortedCategories = [...cRes.data].sort((a, b) => a.name.localeCompare(b.name));
+        setCategories(sortedCategories);
+      }
     } catch { toast("error", "Failed to load products"); }
     finally { setIsLoading(false); }
   }, []);
