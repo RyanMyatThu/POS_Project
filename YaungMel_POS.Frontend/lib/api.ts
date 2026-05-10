@@ -1,42 +1,42 @@
 import axios from "axios";
 import type {
-  ApiResponse,
-  LoginRequest,
-  RegisterRequest,
-  TokenResponse,
-  ProductDTO,
-  CreateProductDTO,
-  UpdateProductDTO,
-  CategoryDTO,
-  CreateCategoryDTO,
-  SaleDTO,
-  CreateSaleDTO,
-  InventoryAdjustDTO,
-  InventoryPriceDTO,
-  SalesOverviewDTO,
-  SalesPerPeriodDTO,
-  TopProductDTO,
-  SearchRequestDTO,
-  CreateAccountReqDTO,
   AccountListReqDTO,
   AccountListResponseWrapper,
+  AccountLookupResponse,
+  ApiResponse,
   AvailableRewardResDTO,
-  EarnPointReqDTO,
+  CategoryDTO,
   ClaimRewardReqDTO,
   ClaimRewardResDTO,
-  PointHistoryResDTO,
-  PendingRedemptionResDTO,
-  AccountLookupResponse,
-  RedemptionStatus,
-  UserResponse,
+  CreateAccountReqDTO,
+  CreateCategoryDTO,
+  CreateProductDTO,
   CreateRewardReqDTO,
-  UpdateRewardReqDTO,
+  CreateSaleDTO,
+  EarnPointReqDTO,
+  InventoryAdjustDTO,
+  InventoryPriceDTO,
+  LoginRequest,
+  PendingRedemptionResDTO,
+  PointHistoryResDTO,
+  ProductDTO,
+  ProductSearchResponseModel,
+  RedemptionStatus,
+  RegisterRequest,
+  SaleDTO,
+  SaleListResponseModel,
+  SalesOverviewDTO,
+  SalesPerPeriodDTO,
   SearchCategoryRequestDTO,
+  SearchRequestDTO,
+  SummaryDetailDto,
   SummaryDTO,
   SummaryListResponseModel,
-  SummaryDetailDto,
-  SaleListResponseModel,
-  ProductSearchResponseModel,
+  TokenResponse,
+  TopProductDTO,
+  UpdateProductDTO,
+  UpdateRewardReqDTO,
+  UserResponse,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -137,12 +137,9 @@ export const productsApi = {
       } as ApiResponse<ProductDTO[]>;
     }),
 
-  create: (data: CreateProductDTO) =>
-    api.post<ApiResponse<ProductDTO>>("/api/products", data).then(unwrap),
-
   createWithPhoto: (data: FormData) =>
     api
-      .post<ApiResponse<ProductDTO>>("/api/products/photo-upload", data, {
+      .post<ApiResponse<ProductDTO>>("/api/products", data, {
         headers: { "Content-Type": "multipart/form-data" },
       })
       .then(unwrap),
@@ -190,7 +187,7 @@ export const categoriesApi = {
         data: normalizeCategoryListData(raw.data),
       } as ApiResponse<CategoryDTO[]>;
     }),
-  
+
   getPaged: (pageNo: number, pageSize: number) =>
     api.get<ApiResponse<SummaryListResponseModel>>(`/api/categories/paged?pageNo=${pageNo}&pageSize=${pageSize}`).then(unwrap),
 
