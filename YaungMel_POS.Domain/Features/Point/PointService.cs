@@ -268,7 +268,23 @@ public class PointService : IPointService
                 {
                     result = new ClaimRewardResDTO { Status = "Pending" };
                 }
-                return Result<ClaimRewardResDTO>.Success(result, "Redemption request created (Pending).");
+
+                // If remaining balance is not returned by the claim API, fetch it manually
+                if (result.RemainingBalance == null)
+                {
+                    var balanceResult = await GetUserBalanceAsync(new CheckBalanceReqDTO
+                    {
+                        SystemId = "YaungMel",
+                        ExternalUserId = request.ExternalUserId
+                    });
+
+                    if (balanceResult.IsSuccess && balanceResult.Data != null)
+                    {
+                        result.RemainingBalance = balanceResult.Data.CurrentBalance;
+                    }
+                }
+
+                return Result<ClaimRewardResDTO>.Success(result, "Redemption request created.");
             }
 
 

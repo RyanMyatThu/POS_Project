@@ -58,88 +58,112 @@ namespace YaungMel_POS.Domain.Features.Report
         {
             return @"
             <style>
+                @font-face { 
+                    font-family: 'Arial'; 
+                    src: local('Arial'); 
+                }
                 body {
-                    font-family: Arial, sans-serif;
+                    font-family: 'Arial', sans-serif;
                     background-color: #ffffff;
                     color: #000000;
                     margin: 0;
                     padding: 20px;
-                    font-size: 10pt;
+                    font-size: 9pt;
+                    line-height: 1.4;
                 }
                 .header-table {
                     width: 100%;
                     border-collapse: collapse;
-                    margin-bottom: 20px;
+                    margin-bottom: 10px;
                 }
                 .company-name {
-                    font-size: 12pt;
+                    font-size: 11pt;
                     font-weight: bold;
                     text-transform: uppercase;
+                    letter-spacing: 1px;
                 }
                 .report-title {
                     text-align: center;
-                    font-size: 16pt;
+                    font-size: 14pt;
                     font-weight: bold;
-                    margin: 20px 0;
-                    border-top: 1px solid #000;
-                    border-bottom: 1px solid #000;
-                    padding: 10px 0;
+                    margin: 15px 0;
+                    border-top: 2px solid #000;
+                    border-bottom: 2px solid #000;
+                    padding: 8px 0;
+                    text-transform: uppercase;
                 }
                 .meta-info {
                     text-align: right;
-                    font-size: 9pt;
+                    font-size: 8pt;
                 }
                 .data-table {
                     width: 100%;
                     border-collapse: collapse;
-                    table-layout: fixed;
-                    margin-top: 0;
+                    margin-top: 5px;
                 }
-                .data-table thead {
-                    display: table-header-group;
-                }
-                .voucher-container {
-                    page-break-inside: avoid !important;
-                    display: block;
-                    width: 100%;
-                }
-                .data-table th, .data-table td {
-                    padding: 5px;
-                    font-size: 9pt;
-                    vertical-align: top;
-                    word-wrap: break-word;
-                }
-                .col-doc { width: 110px; }
-                .col-desc { width: auto; }
-                .col-qty { width: 60px; text-align: center; padding-right: 15px; }
-                .col-price { width: 100px; text-align: right; }
-                .col-total { width: 110px; text-align: right; }
-                
                 .data-table th {
                     border-top: 1px solid #000;
                     border-bottom: 1px solid #000;
-                    text-align: left;
+                    padding: 6px 4px;
+                    font-size: 9pt;
                     font-weight: bold;
+                    text-align: left;
+                    text-transform: uppercase;
+                    background-color: #f9f9f9;
                 }
                 .data-table td {
-                    padding: 5px;
+                    padding: 5px 4px;
                     font-size: 9pt;
                     vertical-align: top;
+                    border-bottom: 1px solid #eee;
                 }
+                .voucher-section {
+                    margin-bottom: 15px;
+                    page-break-inside: avoid;
+                }
+                .voucher-header {
+                    font-weight: bold;
+                    background-color: #eee;
+                    padding: 4px 8px;
+                    font-size: 8pt;
+                    margin-top: 10px;
+                    border-left: 3px solid #333;
+                }
+                .col-doc { width: 120px; }
+                .col-desc { width: auto; }
+                .col-qty { width: 50px; text-align: center; }
+                .col-price { width: 90px; text-align: right; }
+                .col-total { width: 100px; text-align: right; }
+                
                 .text-right { text-align: right; }
                 .text-center { text-align: center; }
                 .bold { font-weight: bold; }
-                .border-bottom { border-bottom: 1px solid #eee; }
-                .footer {
-                    margin-top: 30px;
-                    font-size: 8pt;
-                    border-top: 1px solid #ccc;
-                    padding-top: 5px;
-                    color: #666;
-                }
+                
                 .total-row td {
-                    border-top: 1px solid #000;
+                    border-top: 2px solid #000;
+                    border-bottom: 2px solid #000;
                     font-weight: bold;
+                    font-size: 10pt;
+                    padding: 8px 4px;
+                    background-color: #f0f0f0;
+                }
+                .summary-box {
+                    margin-top: 30px;
+                    padding: 10px;
+                    border: 1px solid #ccc;
+                    width: 300px;
+                    float: right;
+                    background-color: #fafafa;
+                }
+                .summary-item {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 5px;
+                }
+                .clearfix::after {
+                    content: '';
+                    clear: both;
+                    display: table;
                 }
             </style>";
         }
@@ -155,61 +179,48 @@ namespace YaungMel_POS.Domain.Features.Report
             <table class='header-table'>
                 <tr>
                     <td class='company-name'>YAUNG MEL POS SOLUTIONS</td>
-                    <td class='meta-info'>Date : {DateTime.Now:dd/MM/yyyy HH:mm:ss}</td>
+                    <td class='meta-info'>PRINTED : {DateTime.Now:dd/MM/yyyy HH:mm:ss}</td>
                 </tr>
             </table>");
 
-            sb.Append("<div class='report-title'>YaungMel POS Daily Summary Report</div>");
+            sb.Append("<div class='report-title'>Daily Sales Summary Report</div>");
 
             sb.Append($@"
-            <div style='margin-bottom: 15px;'>
-                <span class='bold'>Report Date:</span> {detail.Summary.Date:dd/MM/yyyy}
+            <div style='margin-bottom: 20px; font-size: 10pt;'>
+                <span class='bold'>REPORT DATE:</span> {detail.Summary.Date:dd MMMM yyyy}
             </div>");
-
-            // Table Header (Standalone Table)
-            sb.Append(@"
-            <table class='data-table'>
-                <thead>
-                    <tr>
-                        <th class='col-doc'>Voucher Code</th>
-                        <th class='col-desc'>Item Description</th>
-                        <th class='col-qty'>Qty</th>
-                        <th class='col-price'>Unit Price</th>
-                        <th class='col-total'>Total</th>
-                    </tr>
-                </thead>
-            </table>");
 
             foreach (var sale in detail.Sales)
             {
-                sb.Append("<div class='voucher-container'>");
-                sb.Append("<table class='data-table'><tbody>");
-                bool firstItem = true;
+                sb.Append("<div class='voucher-section'>");
+                sb.Append($"<div class='voucher-header'>VOUCHER: {sale.VoucherCode}</div>");
+                sb.Append("<table class='data-table'>");
+                sb.Append(@"
+                <thead>
+                    <tr>
+                        <th class='col-desc'>Item Description</th>
+                        <th class='col-qty'>Qty</th>
+                        <th class='col-price'>Price</th>
+                        <th class='col-total'>Total</th>
+                    </tr>
+                </thead>
+                <tbody>");
+
                 foreach (var item in sale.SaleItems)
                 {
                     sb.Append("<tr>");
-                    if (firstItem)
-                    {
-                        sb.Append($"<td class='col-doc'>{sale.VoucherCode}</td>");
-                        firstItem = false;
-                    }
-                    else
-                    {
-                        sb.Append("<td class='col-doc'></td>");
-                    }
-
                     sb.Append($"<td class='col-desc'>{item.ProductName}</td>");
                     sb.Append($"<td class='col-qty'>{item.Quantity}</td>");
                     sb.Append($"<td class='col-price'>{item.Price:N0}</td>");
-                    sb.Append($"<td class='col-total'>{(item.Price * item.Quantity):N0} MMK</td>");
+                    sb.Append($"<td class='col-total'>{(item.Price * item.Quantity):N0}</td>");
                     sb.Append("</tr>");
                 }
 
                 // Subtotal for the voucher
                 sb.Append($@"
                 <tr>
-                    <td colspan='4' class='text-right col-desc' style='font-size: 8pt; color: #666; font-style: italic; width: calc(100% - 110px);'>Voucher Subtotal:</td>
-                    <td class='col-total bold' style='font-size: 8pt; border-bottom: 1px solid #000;'>{sale.TotalPrice:N0} MMK</td>
+                    <td colspan='3' class='text-right bold'>Voucher Total:</td>
+                    <td class='col-total bold'>{sale.TotalPrice:N0}</td>
                 </tr>");
                 sb.Append("</tbody></table>");
                 sb.Append("</div>");
@@ -217,14 +228,18 @@ namespace YaungMel_POS.Domain.Features.Report
 
             // Grand Total at the end
             sb.Append($@"
-            <table class='data-table'>
-                <tbody>
-                <tr class='total-row'>
-                    <td colspan='4' class='text-right' style='width: calc(100% - 110px);'>GRAND TOTAL</td>
-                    <td class='text-right col-total'>{detail.Summary.TotalAmount:N0} MMK</td>
-                </tr>
-                </tbody>
-            </table>");
+            <div class='clearfix'>
+                <div class='summary-box'>
+                    <div class='summary-item'>
+                        <span class='bold'>TOTAL VOUCHERS:</span>
+                        <span>{detail.Sales.Count}</span>
+                    </div>
+                    <div class='summary-item' style='margin-top: 10px; border-top: 1px solid #000; padding-top: 5px;'>
+                        <span class='bold' style='font-size: 11pt;'>GRAND TOTAL:</span>
+                        <span class='bold' style='font-size: 11pt;'>{detail.Summary.TotalAmount:N0} MMK</span>
+                    </div>
+                </div>
+            </div>");
 
             sb.Append("</body></html>");
             return sb.ToString();
@@ -251,15 +266,15 @@ namespace YaungMel_POS.Domain.Features.Report
             <table class='header-table'>
                 <tr>
                     <td class='company-name'>YAUNG MEL POS SOLUTIONS</td>
-                    <td class='meta-info'>Date : {DateTime.Now:dd/MM/yyyy HH:mm:ss}</td>
+                    <td class='meta-info'>PRINTED : {DateTime.Now:dd/MM/yyyy HH:mm:ss}</td>
                 </tr>
             </table>");
 
-            sb.Append("<div class='report-title'>YaungMel POS Date Range Summary Report</div>");
+            sb.Append("<div class='report-title'>Periodic Sales Summary Report</div>");
 
             sb.Append($@"
-            <div style='margin-bottom: 15px;'>
-                <span class='bold'>Report Period:</span> {start:dd/MM/yyyy} to {end:dd/MM/yyyy}
+            <div style='margin-bottom: 20px; font-size: 10pt;'>
+                <span class='bold'>REPORT PERIOD:</span> {start:dd/MM/yyyy} to {end:dd/MM/yyyy}
             </div>");
 
             // Table Header
@@ -267,10 +282,10 @@ namespace YaungMel_POS.Domain.Features.Report
             <table class='data-table'>
                 <thead>
                     <tr>
-                        <th style='width: 100px;'>Date</th>
-                        <th class='col-desc'>Top Selling Product</th>
-                        <th class='col-qty'>Sales</th>
-                        <th class='col-total'>Total Amount</th>
+                        <th style='width: 100px;'>DATE</th>
+                        <th class='col-desc'>TOP SELLING PRODUCT</th>
+                        <th class='col-qty'>SALES</th>
+                        <th class='col-total'>TOTAL AMOUNT</th>
                     </tr>
                 </thead>
                 <tbody>");
@@ -284,7 +299,7 @@ namespace YaungMel_POS.Domain.Features.Report
                 sb.Append($"<td>{summary.Date:dd/MM/yyyy}</td>");
                 sb.Append($"<td class='col-desc'>{summary.TopSaleProductName ?? "N/A"}</td>");
                 sb.Append($"<td class='col-qty'>{summary.TotalSale}</td>");
-                sb.Append($"<td class='col-total'>{summary.TotalAmount:N0} MMK</td>");
+                sb.Append($"<td class='col-total'>{summary.TotalAmount:N0}</td>");
                 sb.Append("</tr>");
 
                 grandTotal += summary.TotalAmount;
@@ -302,9 +317,17 @@ namespace YaungMel_POS.Domain.Features.Report
             sb.Append("</tbody></table>");
 
             sb.Append($@"
-            <div style='margin-top: 20px; font-size: 9pt;'>
-                <p><span class='bold'>Total Days Processed:</span> {summaries.Count}</p>
-                <p><span class='bold'>Average Daily Amount:</span> {(summaries.Count > 0 ? (grandTotal / summaries.Count).ToString("N0") : "0")} MMK</p>
+            <div class='clearfix'>
+                <div class='summary-box'>
+                    <div class='summary-item'>
+                        <span class='bold'>DAYS PROCESSED:</span>
+                        <span>{summaries.Count}</span>
+                    </div>
+                    <div class='summary-item'>
+                        <span class='bold'>AVG DAILY SALES:</span>
+                        <span>{(summaries.Count > 0 ? (grandTotal / summaries.Count).ToString("N0") : "0")} MMK</span>
+                    </div>
+                </div>
             </div>");
 
             sb.Append("</body></html>");

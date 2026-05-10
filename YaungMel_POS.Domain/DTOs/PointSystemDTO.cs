@@ -80,7 +80,7 @@ public class ClaimRewardResDTO
 {
     public string RedemptionId { get; set; }
     public string Status { get; set; }
-    public int RemainingBalance { get; set; }
+    public int? RemainingBalance { get; set; }
 }
 
 public class ClaimRewardReqDTO
