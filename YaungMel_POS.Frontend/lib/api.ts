@@ -36,6 +36,7 @@ import type {
   SummaryListResponseModel,
   SummaryDetailDto,
   SaleListResponseModel,
+  ProductSearchResponseModel,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -272,7 +273,7 @@ export const dashboardApi = {
 // ─── Search API ───────────────────────────────────────────
 export const searchApi = {
   search: (params: SearchRequestDTO) =>
-    api.get<ApiResponse<ProductDTO[]>>("/api/search", { params }).then(unwrap),
+    api.get<ApiResponse<ProductSearchResponseModel>>("/api/search", { params }).then(unwrap),
 
   searchCategories: (params: SearchCategoryRequestDTO) =>
     api.get<ApiResponse<CategoryDTO[]>>("/api/search/categories", { params }).then(unwrap),

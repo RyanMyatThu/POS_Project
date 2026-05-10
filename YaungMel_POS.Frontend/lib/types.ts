@@ -308,6 +308,11 @@ export interface SaleListResponseModel {
   pageSetting: PageSettingDTO;
 }
 
+export interface ProductSearchResponseModel {
+  items: ProductDTO[];
+  pageSetting: PageSettingDTO;
+}
+
 export interface SummaryDetailDto {
   summary: SummaryDTO;
   sales: SaleDTO[];

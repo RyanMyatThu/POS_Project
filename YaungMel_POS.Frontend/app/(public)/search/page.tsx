@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Search as SearchIcon, Filter, RotateCcw, Boxes } from "lucide-react";
 import { searchApi, categoriesApi } from "@/lib/api";
-import type { CategoryDTO, ProductDTO, SearchRequestDTO } from "@/lib/types";
+import type { CategoryDTO, ProductDTO, SearchRequestDTO, PageSettingDTO } from "@/lib/types";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { AnimatedPage } from "@/components/ui/AnimatedPage";
 import { toast } from "@/components/ui/Toast";
+import { Pagination } from "@/components/ui/Pagination";
 
 const initialFilters: SearchRequestDTO = {
   name: "", categoryId: undefined, minPrice: undefined, maxPrice: undefined,
@@ -21,6 +22,11 @@ const initialFilters: SearchRequestDTO = {
 export default function SearchPage() {
   const [categories, setCategories] = useState<CategoryDTO[]>([]);
   const [results, setResults] = useState<ProductDTO[]>([]);
+  const [pageSetting, setPageSetting] = useState<PageSettingDTO>({
+    pageNo: 1,
+    pageSize: 20,
+    pageCount: 0,
+  });
   const [filters, setFilters] = useState<SearchRequestDTO>(initialFilters);
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
@@ -29,9 +35,15 @@ export default function SearchPage() {
     const timer = window.setTimeout(async () => {
       setIsLoading(true);
       try {
-        const [categoryRes, searchRes] = await Promise.all([categoriesApi.getAll(), searchApi.search(initialFilters)]);
+        const [categoryRes, searchRes] = await Promise.all([
+          categoriesApi.getAll(),
+          searchApi.search(initialFilters)
+        ]);
         if (categoryRes.isSuccess && categoryRes.data) setCategories(categoryRes.data);
-        if (searchRes.isSuccess && searchRes.data) setResults(searchRes.data);
+        if (searchRes.isSuccess && searchRes.data) {
+          setResults(searchRes.data.items);
+          setPageSetting(searchRes.data.pageSetting);
+        }
         else toast("error", searchRes.message || "Search failed");
       } catch { toast("error", "Failed to load search tools"); }
       finally { setIsLoading(false); }
@@ -39,11 +51,16 @@ export default function SearchPage() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  const handleSearch = async () => {
+  const handleSearch = async (page: number = 1) => {
+    const updatedFilters = { ...filters, pageNumber: page };
+    setFilters(updatedFilters);
     setIsSearching(true);
     try {
-      const res = await searchApi.search(filters);
-      if (res.isSuccess && res.data) setResults(res.data);
+      const res = await searchApi.search(updatedFilters);
+      if (res.isSuccess && res.data) {
+        setResults(res.data.items);
+        setPageSetting(res.data.pageSetting);
+      }
       else toast("error", res.message || "Search failed");
     } catch { toast("error", "Search request failed"); }
     finally { setIsSearching(false); }
@@ -54,7 +71,10 @@ export default function SearchPage() {
     setIsSearching(true);
     try {
       const res = await searchApi.search(initialFilters);
-      if (res.isSuccess && res.data) setResults(res.data);
+      if (res.isSuccess && res.data) {
+        setResults(res.data.items);
+        setPageSetting(res.data.pageSetting);
+      }
     } catch { toast("error", "Failed to reset search"); }
     finally { setIsSearching(false); }
   };
@@ -98,7 +118,7 @@ export default function SearchPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-3 mt-6">
-            <Button onClick={handleSearch} isLoading={isSearching} icon={<SearchIcon size={16} />}>Run Search</Button>
+            <Button onClick={() => void handleSearch(1)} isLoading={isSearching} icon={<SearchIcon size={16} />}>Run Search</Button>
             <Button variant="secondary" onClick={handleReset} icon={<RotateCcw size={16} />}>Reset</Button>
           </div>
         </Card>
@@ -134,6 +154,17 @@ export default function SearchPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!isLoading && pageSetting.pageCount > 1 && (
+            <div className="p-4 border-t border-[var(--border-primary)] bg-[var(--bg-secondary)] rounded-b-2xl">
+              <Pagination
+                currentPage={pageSetting.pageNo}
+                totalPages={pageSetting.pageCount}
+                onPageChange={(page) => void handleSearch(page)}
+              />
             </div>
           )}
         </Card>
