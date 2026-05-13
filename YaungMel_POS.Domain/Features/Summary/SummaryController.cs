@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using YaungMel_POS.Shared.Responses;
+using YaungMel_POS.Shared;
 
 namespace YaungMel_POS.Domain.Features.Summary
 {

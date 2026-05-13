@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using YaungMel_POS.Domain.DTOs;
-using YaungMel_POS.Shared.Responses;
+using YaungMel_POS.Shared;
 
 namespace YaungMel_POS.Domain.Features.Auth;
 

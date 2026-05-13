@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using YaungMel_POS.Database.Data;
 using YaungMel_POS.Database.Models;
 using YaungMel_POS.Domain.DTOs;
-using YaungMel_POS.Shared.Responses;
+using YaungMel_POS.Shared;
 
 namespace YaungMel_POS.Domain.Features.Summary;
 

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Security.Claims;
 using YaungMel_POS.Domain.DTOs;
-using YaungMel_POS.Shared.Responses;
+using YaungMel_POS.Shared;
 
 namespace YaungMel_POS.Domain.Features.Inventory
 {

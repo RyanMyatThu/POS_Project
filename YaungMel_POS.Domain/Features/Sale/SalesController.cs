@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Security.Claims;
 using YaungMel_POS.Domain.DTOs;
-using YaungMel_POS.Shared.Responses;
 using System;
+using YaungMel_POS.Shared;
 
 
 namespace YaungMel_POS.Domain.Features.Sale
