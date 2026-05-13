@@ -24,30 +24,33 @@ namespace YaungMel_POS.Domain.Features.Search
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new Result<object>
-                {
-                    IsSuccess = false,
-                    Message = "Invalid search parameters."
-                });
+                return BadRequest(ModelState);
             }
-            try
+            var products = await _service.SearchProductsAsync(searchRequest);
+            if (products == null) 
             {
-                var products = await _service.SearchProductsAsync(searchRequest);
-                return Ok(new Result<object>
-                {
-                    IsSuccess = true,
-                    Message = "Search completed successfully.",
-                    Data = products
-                });
+                return BadRequest(products);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new Result<object>
-                {
-                    IsSuccess = false,
-                    Message = $"An error occurred while searching for products: {ex.Message}"
-                });
-            }
+            return Ok(products);
+            //try
+            //{
+            //    var products = await _service.SearchProductsAsync(searchRequest);
+            //    return Ok(new Result<object>
+            //    {
+            //        IsSuccess = true,
+            //        Message = "Search completed successfully.",
+            //        Data = products
+            //    });
+            //}
+            //catch (Exception ex)
+            //{
+            //    return StatusCode(500, new Result<object>
+            //    {
+            //        IsSuccess = false,
+            //        Message = $"An error occurred while searching for products: {ex.Message}"
+            //    });
+            //}
+
         }
 
         // GET : api/search/categories
@@ -56,30 +59,32 @@ namespace YaungMel_POS.Domain.Features.Search
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new Result<object>
-                {
-                    IsSuccess = false,
-                    Message = "Invalid search parameters."
-                });
+                return BadRequest(ModelState);
             }
-            try
+            var categories = await _service.SearchCategoryAsync(searchRequest);
+            if (categories == null)
             {
-                var categories = await _service.SearchCategoryAsync(searchRequest);
-                return Ok(new Result<object>
-                {
-                    IsSuccess = true,
-                    Message = "Search completed successfully.",
-                    Data = categories
-                });
+                return BadRequest(categories);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new Result<object>
-                {
-                    IsSuccess = false,
-                    Message = $"An error occurred while searching for categories: {ex.Message}"
-                });
-            }
+            return Ok(categories);
+            //try
+            //{
+            //    var categories = await _service.SearchCategoryAsync(searchRequest);
+            //    return Ok(new Result<object>
+            //    {
+            //        IsSuccess = true,
+            //        Message = "Search completed successfully.",
+            //        Data = categories
+            //    });
+            //}
+            //catch (Exception ex)
+            //{
+            //    return StatusCode(500, new Result<object>
+            //    {
+            //        IsSuccess = false,
+            //        Message = $"An error occurred while searching for categories: {ex.Message}"
+            //    });
+            //}
 
         }
     }

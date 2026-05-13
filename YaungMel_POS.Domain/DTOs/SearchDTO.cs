@@ -1,3 +1,5 @@
+using YaungMel_POS.Shared;
+
 namespace YaungMel_POS.Domain.DTOs
 {
     public class SearchDTO
@@ -9,7 +11,7 @@ namespace YaungMel_POS.Domain.DTOs
         public decimal? Price { get; set; }
     }
 
-    public class SearchProductRequestDTO
+    public class SearchProductRequestDTO : PaginationRequest
     {
         public int? CategoryId { get; set; }
         public decimal? MinPrice { get; set; }
@@ -28,15 +30,11 @@ namespace YaungMel_POS.Domain.DTOs
         }
         public SortOptions SortBy { get; set; } = 0;
         public bool IsDescending { get; set; } = false;
-        public int PageNumber { get; set; } = 1;
-        public int PageSize { get; set; } = 20;
     }
 
-    public class SearchCategoryRequestDTO
+    public class SearchCategoryRequestDTO : PaginationRequest 
     {
         public string? Name { get; set; }
         public bool IsDescending { get; set; } = false;
-        public int PageNumber { get; set; } = 1;
-        public int PageSize { get; set; } = 20;
     }
 }
