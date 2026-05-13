@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using YaungMel_POS.Database.Data;
 using YaungMel_POS.Database.Models;
 using YaungMel_POS.Domain.DTOs;
@@ -22,7 +23,7 @@ public class SummaryService : ISummaryService
     }
 
     #region Create Summary
-    public async Task<PagedResult<SummaryDTO>> CreateSummaryAsync()
+    public async Task<Result<SummaryDTO>> CreateSummaryAsync()
     {
         try
         {
@@ -89,31 +90,31 @@ public class SummaryService : ISummaryService
                 TopSaleProductName = topProduct?.ProductName
             };
 
-            return PagedResult<SummaryDTO>.Success(resModel);
+            return Result<SummaryDTO>.Success(resModel);
         }
         catch (Exception ex)
         {
-            return PagedResult<SummaryDTO>.SystemError(ex.Message);
+            return Result<SummaryDTO>.SystemError(ex.Message);
         }
     }
     #endregion
 
     #region Get Summary By Pagination
-    public async Task<PagedResult<SummaryListResponseModel>> GetSummaryByPagination(int pageNo = 1, int pageSize = 10)
+    public async Task<PagedResult<SummaryDTO>> GetSummaryByPagination(PaginationRequest request)
     {
+        if (request is null) return PagedResult<SummaryDTO>.ValidationError("Request cannot be null!");
+        
         try
         {
-            if (pageSize <= 0) return PagedResult<SummaryListResponseModel>.SystemError("Page size must be greater than 0.");
+
 
             var totalItems = await _db.Summaries.CountAsync();
-            int pageCount = totalItems / pageSize;
-            if (totalItems % pageSize > 0) pageCount++;
 
             var summaries = await _db.Summaries
                 .AsNoTracking()
                 .OrderByDescending(s => s.Date)
-                .Skip((pageNo - 1) * pageSize)
-                .Take(pageSize)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .Select(s => new SummaryDTO
                 {
                     Date = s.Date,
@@ -124,23 +125,19 @@ public class SummaryService : ISummaryService
                 })
                 .ToListAsync();
 
-            var resModel = new SummaryListResponseModel
-            {
-                Items = summaries,
-                PageSetting = new PageSettingDTO(pageNo, pageSize, pageCount)
-
-            };
-            return PagedResult<SummaryListResponseModel>.Success(resModel);
+            var pagination = new Pagination(request.PageSize, request.PageNumber, totalItems);
+        
+            return PagedResult<SummaryDTO>.Success(summaries, pagination);
         }
         catch (Exception ex)
         {
-            return PagedResult<SummaryListResponseModel>.SystemError(ex.Message);
+            return PagedResult<SummaryDTO>.SystemError(ex.Message);
         }
     }
     #endregion
 
     #region Get Summary By Date
-    public async Task<PagedResult<SummaryDetailDto>> GetSummaryByDateAsync(DateTime date)
+    public async Task<Result<SummaryDetailDto>> GetSummaryByDateAsync(DateTime date)
     {
         try
         {
@@ -151,7 +148,7 @@ public class SummaryService : ISummaryService
                 .Include(s => s.TopSaleProduct)
                 .FirstOrDefaultAsync(s => s.Date == targetDate);
 
-            if (summary is null) return PagedResult<SummaryDetailDto>.NotFound("Summary not found for the specified date.");
+            if (summary is null) return Result<SummaryDetailDto>.NotFound("Summary not found for the specified date.");
 
             var sales = await _db.Sales
                 .Include(s => s.SaleItems)
@@ -185,17 +182,17 @@ public class SummaryService : ISummaryService
                 }).ToList()
             };
 
-            return PagedResult<SummaryDetailDto>.Success(detail);
+            return Result<SummaryDetailDto>.Success(detail);
         }
         catch (Exception ex)
         {
-            return PagedResult<SummaryDetailDto>.SystemError(ex.Message);
+            return Result<SummaryDetailDto>.SystemError(ex.Message);
         }
     }
     #endregion
 
     #region Get Summary By Date Range
-    public async Task<PagedResult<List<SummaryDTO>>> GetSummaryByDateRangeAsync(DateTime startDate, DateTime endDate)
+    public async Task<Result<List<SummaryDTO>>> GetSummaryByDateRangeAsync(DateTime startDate, DateTime endDate)
     {
         try
         {
@@ -216,11 +213,11 @@ public class SummaryService : ISummaryService
                 })
                 .ToListAsync();
 
-            return PagedResult<List<SummaryDTO>>.Success(summaries);
+            return Result<List<SummaryDTO>>.Success(summaries);
         }
         catch (Exception ex)
         {
-            return PagedResult<List<SummaryDTO>>.SystemError(ex.Message);
+            return Result<List<SummaryDTO>>.SystemError(ex.Message);
         }
     }
     #endregion

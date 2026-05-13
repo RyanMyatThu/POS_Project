@@ -33,19 +33,14 @@ namespace YaungMel_POS.Domain.Features.Summary
         // GET: api/summaries/paged?pageNo=1&pageSize=10
         [HttpGet]
         [HttpGet("paged")]
-        public async Task<IActionResult> GetSummaryByPagination(
-            [FromQuery] int pageNo = 1,
-            [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetSummaryByPagination([FromQuery] PaginationRequest request)
         {
-            if (pageNo <= 0 || pageSize <= 0)
-            {
-                return BadRequest(PagedResult<object>.SystemError("Page number and page size must be greater than zero."));
-            }
-
-            var result = await _service.GetSummaryByPagination(pageNo, pageSize);
+            var result = await _service.GetSummaryByPagination(request);
 
             if (!result.IsSuccess)
+            {
                 return BadRequest(result);
+            }
 
             return Ok(result);
         }
