@@ -40,11 +40,12 @@ import type {
   UserResponse,
 } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = "https://localhost:7144";
+// process.env.NEXT_PUBLIC_API_URL ||
+// "http://localhost:5000" ||
 
 const api = axios.create({
   baseURL: API_BASE,
-  headers: { "Content-Type": "application/json" },
 });
 
 // ─── Request interceptor: attach token ────────────────────
@@ -62,7 +63,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (error) => {
-    if (error.response?.status === 401 && typeof window !== "undefined") {
+    const requestUrl = error.config?.url;
+    const isLoginRequest = requestUrl === "/api/auth/login";
+
+    if (
+      error.response?.status === 401 &&
+      typeof window !== "undefined" &&
+      !isLoginRequest
+    ) {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
       window.location.href = "/login";
@@ -101,6 +109,34 @@ function normalizeSalesListData(data: unknown): SaleDTO[] {
     if (Array.isArray(items)) return items as SaleDTO[];
   }
   return [];
+}
+
+function normalizePageSetting(
+  pagination: unknown,
+  fallbackPageNo: number,
+  fallbackPageSize: number,
+): { pageNo: number; pageSize: number; pageCount: number } {
+  if (pagination && typeof pagination === "object") {
+    const page = pagination as {
+      pageNo?: number;
+      pageNumber?: number;
+      pageSize?: number;
+      pageCount?: number;
+      totalPages?: number;
+    };
+
+    return {
+      pageNo: page.pageNo ?? page.pageNumber ?? fallbackPageNo,
+      pageSize: page.pageSize ?? fallbackPageSize,
+      pageCount: page.pageCount ?? page.totalPages ?? 0,
+    };
+  }
+
+  return {
+    pageNo: fallbackPageNo,
+    pageSize: fallbackPageSize,
+    pageCount: 0,
+  };
 }
 
 // ─── Auth API ─────────────────────────────────────────────
@@ -147,15 +183,19 @@ export const productsApi = {
         } as ApiResponse<ProductDTO[]>;
       }),
 
+  getAvailable: () =>
+    productsApi.getAll().then((res) => ({
+      ...res,
+      data: res.data?.filter((product) => product.isActive && !product.deleteFlag) ?? [],
+    })),
+
   getById: (id: number) =>
     api.get<ApiResponse<ProductDTO>>(`/api/products/${id}`).then(unwrap),
 
-  // createWithPhoto: (data: FormData) =>
-  //   api
-  //     .post<ApiResponse<ProductDTO>>("/api/products", data, {
-  //       headers: { "Content-Type": "multipart/form-data" },
-  //     })
-  //     .then(unwrap),
+  createWithPhoto: (data: FormData) =>
+    api
+      .post<ApiResponse<ProductDTO>>("/api/products", data)
+      .then(unwrap),
 
   // create: (input: CreateProductDTO | FormData) => {
   //   const formData = input instanceof FormData
@@ -169,12 +209,8 @@ export const productsApi = {
     const isFormData = input instanceof FormData;
     const formData = isFormData ? input : createFormDataFromDTO(input);
 
-    const config = isFormData
-      ? {} // Let browser set Content-Type
-      : { headers: { "Content-Type": "multipart/form-data" } };
-
     return api
-      .post<ApiResponse<ProductDTO>>("/api/products", formData, config)
+      .post<ApiResponse<ProductDTO>>("/api/products", formData)
       .then(unwrap);
   },
 
@@ -198,9 +234,7 @@ export const productsApi = {
 
   updateWithPhoto: (id: number, data: FormData) =>
     api
-      .patch<ApiResponse<ProductDTO>>(`/api/products/${id}`, data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
+      .patch<ApiResponse<ProductDTO>>(`/api/products/${id}`, data)
       .then(unwrap),
 
   delete: (id: number) =>
@@ -272,9 +306,27 @@ export const salesApi = {
   getPaged: (pageNo: number, pageSize: number) =>
     api
       .get<
-        ApiResponse<SaleListResponseModel>
+        ApiResponse<unknown> & { data?: unknown; pagination?: unknown }
       >(`/api/sales/paged?pageNo=${pageNo}&pageSize=${pageSize}`)
-      .then(unwrap),
+      .then((res) => {
+        const raw = res.data;
+        const dataObject =
+          raw.data && typeof raw.data === "object" && !Array.isArray(raw.data)
+            ? (raw.data as { items?: unknown; pageSetting?: unknown })
+            : undefined;
+
+        return {
+          ...raw,
+          data: {
+            items: normalizeSalesListData(dataObject?.items ?? raw.data),
+            pageSetting: normalizePageSetting(
+              dataObject?.pageSetting ?? raw.pagination,
+              pageNo,
+              pageSize,
+            ),
+          },
+        } as ApiResponse<SaleListResponseModel>;
+      }),
 
   getById: (id: number) =>
     api.get<ApiResponse<SaleDTO>>(`/api/sales/${id}`).then(unwrap),

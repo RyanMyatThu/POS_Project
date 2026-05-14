@@ -115,44 +115,44 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
             string photoPublicId = null;
             try
             {
+                // Validations
+                if (string.IsNullOrWhiteSpace(request.Name))
+                    return Result<ProductDTO>.ValidationError("Product name is required!");
+
+                if (request.Price <= 0)
+                    return Result<ProductDTO>.ValidationError("Price must be greater than zero!");
+
+                if (request.StockQuantity < 0)
+                    return Result<ProductDTO>.ValidationError("Stock quantity cannot be negative!");
+
                 var duplicateProduct = await _db.Products
                     .AnyAsync(p => p.Name.ToLower() == request.Name.Trim().ToLower() && !p.DeleteFlag);
 
-                if (duplicateProduct) 
+                if (duplicateProduct)
                     return Result<ProductDTO>.ValidationError("Product with the same name already exists.");
 
                 var categoryExists = await _db.Categories
                     .AnyAsync(c => c.Id == request.CategoryId && !c.DeleteFlag);
 
-                if (!categoryExists) 
+                if (!categoryExists)
                     return Result<ProductDTO>.ValidationError("Category not found");
 
-                if (string.IsNullOrWhiteSpace(request.Name))
-                    return Result<ProductDTO>.ValidationError("Product name is required!");
-
-                if (request.Price <=  0) 
-                    return Result<ProductDTO>.ValidationError("Price must be greater than zero!");
-
                 string photoUrl = null;
-
                 if (photoStream != null)
                 {
                     var uploadFileName = string.IsNullOrWhiteSpace(fileName) ? request.Name : fileName;
                     var uploadResult = await _photoService.UploadPhotoAsync(photoStream, uploadFileName);
-
                     if (uploadResult == null || uploadResult.Error != null || uploadResult.SecureUrl == null)
                     {
                         var uploadError = uploadResult?.Error?.Message;
                         var message = string.IsNullOrWhiteSpace(uploadError)
-                            ? "Photo upload failed."
-                            : $"Photo upload failed: {uploadError}";
+                        ? "Photo upload failed."
+                        : $"Photo upload failed: {uploadError}";
                         return Result<ProductDTO>.SystemError(message);
                     }
-
                     photoUrl = uploadResult.SecureUrl.ToString();
                     photoPublicId = uploadResult.PublicId;
                 }
-
                 var newProduct = new Tbl_Product
                 {
                     Name = request.Name.Trim(),
@@ -167,10 +167,8 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     ImageUrl = photoUrl,
                     ImageId = photoPublicId
                 };
-
                 _db.Products.Add(newProduct);
                 await _db.SaveChangesAsync();
-
                 var data = new ProductDTO
                 {
                     Id = newProduct.Id,
@@ -185,7 +183,6 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     ImageUrl = newProduct.ImageUrl,
                     ImageId = newProduct.ImageId
                 };
-
                 return Result<ProductDTO>.Success(data, "Product created successfully.");
             }
             catch (Exception ex)
@@ -195,7 +192,6 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                 {
                     await _photoService.DeletePhotoAsync(photoPublicId);
                 }
-
                 return Result<ProductDTO>.SystemError(ex.Message);
             }
         }
@@ -204,6 +200,8 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
         #region update product
         public async Task<Result<ProductDTO>> UpdateAsync(int id, UpdateProductDTO request, Stream? photoStream, string fileName, int userId)
         {
+            string? newImageId = null;
+            string? oldImageId = null;
             try
             {
                 var product = await _db.Products.FirstOrDefaultAsync(p => p.Id == id);
@@ -211,11 +209,10 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                 if (product is null || product.DeleteFlag == true)
                     return Result<ProductDTO>.NotFound("Product not found");
 
-                //var oldValues = JsonSerializer.Serialize(product, _jsonOptions);
-
                 // Set the RowVersion from the client request so EF Core can detect concurrent modifications
                 _db.Entry(product).Property(p => p.xmin).OriginalValue = request.Version;
 
+                // Partial Update: Only update if the value is provided
                 if (!string.IsNullOrWhiteSpace(request.Name))
                 {
                     var isDuplicate = await _db.Products.AnyAsync(p =>
@@ -233,16 +230,21 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                 if (request.Description != null)
                     product.Description = request.Description.Trim();
 
-                if (request.Price != null)
+                if (request.Price.HasValue)
                     product.Price = request.Price.Value;
 
-                if (request.StockQuantity != null)
+                if (request.StockQuantity.HasValue)
                     product.StockQuantity = request.StockQuantity.Value;
 
-                if (request.CategoryId != null)
+                if (request.CategoryId.HasValue)
+                {
+                    var categoryExists = await _db.Categories.AnyAsync(c => c.Id == request.CategoryId.Value && !c.DeleteFlag);
+                    if (!categoryExists)
+                        return Result<ProductDTO>.ValidationError("Selected category does not exist.");
+                    
                     product.CategoryId = request.CategoryId.Value;
+                }
 
-                string oldImageId = null;
                 if (photoStream != null)
                 {
                     var uploadResult = await _photoService.UploadPhotoAsync(photoStream, fileName);
@@ -255,10 +257,12 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                         return Result<ProductDTO>.SystemError(message);
                     }
 
+                    // Track IDs for cleanup/rollback
                     oldImageId = product.ImageId;
+                    newImageId = uploadResult.PublicId;
 
                     product.ImageUrl = uploadResult.SecureUrl.ToString();
-                    product.ImageId = uploadResult.PublicId;
+                    product.ImageId = newImageId;
                 }
 
                 product.UpdatedAt = DateTime.UtcNow;
@@ -266,7 +270,11 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
 
                 await _db.SaveChangesAsync();
 
-                //await _auditService.LogUpdateAsync(product, userId, oldValues, "Product");
+                // Success: Clean up the old photo if it was replaced
+                if (!string.IsNullOrEmpty(newImageId) && !string.IsNullOrEmpty(oldImageId))
+                {
+                    await _photoService.DeletePhotoAsync(oldImageId);
+                }
 
                 var data = new ProductDTO
                 {
@@ -285,10 +293,20 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
             }
             catch (DbUpdateConcurrencyException)
             {
+                // Rollback: Delete the newly uploaded photo since the DB update failed
+                if (!string.IsNullOrEmpty(newImageId))
+                {
+                    await _photoService.DeletePhotoAsync(newImageId);
+                }
                 return Result<ProductDTO>.SystemError("The product was modified by another user. Please refresh and try again.");
             }
             catch (Exception ex)
             {
+                // Rollback: Delete the newly uploaded photo since the DB update failed
+                if (!string.IsNullOrEmpty(newImageId))
+                {
+                    await _photoService.DeletePhotoAsync(newImageId);
+                }
                 return Result<ProductDTO>.SystemError(ex.Message);
             }
         }

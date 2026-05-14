@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { authApi } from "./api";
-import type { LoginRequest, RegisterRequest, UserRole } from "./types";
+import type { LoginRequest, RegisterRequest } from "./types";
 
 function generateUsername(mobileNum: string): string {
   const digits = mobileNum.replace(/\D/g, "");
@@ -23,6 +23,15 @@ interface User {
   token: string;
   username: string;
 }
+
+type ApiError = {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+    };
+  };
+};
 
 interface AuthContextValue {
   user: User | null;
@@ -70,7 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (data: LoginRequest) => {
     try {
       const res = await authApi.login(data);
-      if (res.isSuccess && res.data) {
+      const isSuccess =
+        res.isSuccess || (res as unknown as { success?: boolean }).success === true;
+
+      if (isSuccess && res.data) {
         const username = generateUsername(res.data.mobileNum);
         const u: User = {
           mobileNum: res.data.mobileNum,
@@ -85,9 +97,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return { success: false, message: res.message || "Login failed" };
     } catch (err: unknown) {
+      const apiError = err as ApiError;
       const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Login failed. Please try again.";
+        apiError.response?.data?.message ||
+        (apiError.response?.status === 401
+          ? "Invalid username or password!"
+          : "Login failed. Please try again.");
       return { success: false, message };
     }
   }, []);

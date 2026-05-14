@@ -64,9 +64,9 @@ public class AuthController : ControllerBase
 
         var result = await _authService.LoginAsync(request);
 
-        if (result == null)
+        if (!result.IsSuccess || result.Data is null)
         {
-            return Unauthorized();
+            return Unauthorized(result);
         }
 
         var tokenResponse = result.Data;
@@ -77,7 +77,7 @@ public class AuthController : ControllerBase
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Strict,
-            Expires = DateTime.UtcNow.AddDays(7) 
+            Expires = DateTime.UtcNow.AddDays(7)
         };
 
         Response.Cookies.Append("refreshToken", tokenResponse.RefreshToken, cookieOptions);
@@ -146,5 +146,5 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
-    
+
 }

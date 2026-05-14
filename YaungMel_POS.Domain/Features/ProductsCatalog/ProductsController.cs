@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -47,30 +48,35 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
 
         // POST: api/products/
         [Authorize(Roles = "Admin")]
-        [Consumes("multipart/form-data")]
         [HttpPost()]
         public async Task<IActionResult> Create([FromForm] CreateProductDTO createRequest, IFormFile? photoFile)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            Stream? stream = null;
-            string fileName = string.Empty;
-            if (photoFile != null && photoFile.Length > 0)
+            try
             {
-                stream = photoFile.OpenReadStream();
-                fileName = string.IsNullOrWhiteSpace(photoFile.FileName) ? "uploaded-photo" : photoFile.FileName;
+                using var stream = photoFile?.Length > 0 ? photoFile.OpenReadStream() : null;
+                var fileName = string.Empty;
+                if (photoFile != null && photoFile.Length > 0)
+                {
+                    fileName = string.IsNullOrWhiteSpace(photoFile.FileName) ? "uploaded-photo" : photoFile.FileName;
+                }
+
+                var result = await _service.CreateAsync(createRequest, stream, fileName, GetCurrentUserId());
+
+                if (!result.IsSuccess)
+                    return BadRequest(result);
+
+                return CreatedAtAction(
+                    nameof(GetById),
+                    new { id = result.Data?.Id },
+                    result);
             }
-
-            var result = await _service.CreateAsync(createRequest, stream, fileName, GetCurrentUserId());
-
-            if (!result.IsSuccess)
-                return BadRequest(result);
-
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = result.Data?.Id },
-                result);
+            catch (Exception ex)
+            {
+                return BadRequest(Result<ProductDTO>.SystemError($"An internal error occurred: {ex.Message}"));
+            }
         }
 
         // PATCH: api/products/{id}
@@ -81,19 +87,26 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            using var stream = photoFile?.Length > 0 ? photoFile.OpenReadStream() : null;
-            var fileName = string.Empty;
-            if (photoFile != null && photoFile.Length > 0)
+            try
             {
-                fileName = string.IsNullOrWhiteSpace(photoFile.FileName) ? "uploaded-photo" : photoFile.FileName;
+                using var stream = photoFile?.Length > 0 ? photoFile.OpenReadStream() : null;
+                var fileName = string.Empty;
+                if (photoFile != null && photoFile.Length > 0)
+                {
+                    fileName = string.IsNullOrWhiteSpace(photoFile.FileName) ? "uploaded-photo" : photoFile.FileName;
+                }
+
+                var result = await _service.UpdateAsync(id, updateRequest, stream, fileName, GetCurrentUserId());
+
+                if (!result.IsSuccess)
+                    return result.Message.Contains("not found") ? NotFound(result) : BadRequest(result);
+
+                return Ok(result);
             }
-
-            var result = await _service.UpdateAsync(id, updateRequest, stream, fileName, GetCurrentUserId());
-
-            if (!result.IsSuccess)
-                return result.Message.Contains("not found") ? NotFound(result) : BadRequest(result);
-
-            return Ok(result);
+            catch (Exception ex)
+            {
+                return BadRequest(Result<ProductDTO>.SystemError($"An internal error occurred: {ex.Message}"));
+            }
         }
 
         // DELETE: api/products/{id}
