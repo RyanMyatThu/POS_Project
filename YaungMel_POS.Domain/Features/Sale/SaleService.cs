@@ -21,7 +21,7 @@ public class SaleService : ISaleService
         _auditService = auditService;
     }
 
-    private IQueryable<Tbl_Product> ActiveProduct => _db.Products.Where(p => !p.DeleteFlag);
+    //private IQueryable<Tbl_Product> ActiveProduct => _db.Products.Where(p => !p.DeleteFlag);
 
     #region Create Sale
     public async Task<Result<SaleDTO>> CreateSaleAsync(CreateSaleDTO reqSale, int userId)
@@ -145,22 +145,21 @@ public class SaleService : ISaleService
     #endregion
 
     #region Get All Sale Paignation
-    public async Task<Result<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize)
+    public async Task<PagedResult<SaleDTO>> GetSalesAsync(PaginationRequest request)
     {
+        if (request is null)
+        {
+            return PagedResult<SaleDTO>.ValidationError("Request cannot be null!");
+        }
         try
         {
-            if (pageSize <= 0) return Result<SaleListResponseDTO>.SystemError("Page size must be greater than 0.");
-
             var totalItems = await _db.Sales.CountAsync();
-
-            var pageCount = totalItems / pageSize;
-            if(totalItems % pageSize > 0) pageCount++;
 
             var sales = await _db.Sales
                 .AsNoTracking()
                 .OrderByDescending(s => s.Id)
-                .Skip((pageNo - 1) * pageSize)
-                .Take(pageSize)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .Select(sale => new SaleDTO
                 {
                     Id = sale.Id,
@@ -177,17 +176,13 @@ public class SaleService : ISaleService
                 })
                 .ToListAsync();
 
-            var result = new SaleListResponseDTO
-            {
-                Items = sales,
-                PageSetting = new PageSettingDTO(pageNo, pageSize, pageCount)
-            };
+            var pagination = new Pagination(request.PageNumber, request.PageSize, totalItems);
 
-            return Result<SaleListResponseDTO>.Success(result);
+            return PagedResult<SaleDTO>.Success(sales, pagination);
         }
         catch (Exception ex)
         {
-            return Result<SaleListResponseDTO>.SystemError($"Error: {ex.Message}");
+            return PagedResult<SaleDTO>.SystemError($"Error: {ex.Message}");
         }
     }
     #endregion
@@ -204,8 +199,10 @@ public class SaleService : ISaleService
                .FirstOrDefaultAsync(s => s.VoucherCode == voucherCode);
 
             if (sale is null)
+            {
                 return Result<SaleDTO>.NotFound("Sale not found.");
-
+            }
+            
             var resModel = new SaleDTO
             {
                 Id = sale.Id,

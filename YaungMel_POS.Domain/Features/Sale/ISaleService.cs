@@ -12,8 +12,7 @@ namespace YaungMel_POS.Domain.Features.Sale
     public interface ISaleService
     {
         Task<Result<SaleDTO>> CreateSaleAsync(CreateSaleDTO reqSale, int userId);
-        Task<Result<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize);
-
+        Task<PagedResult<SaleDTO>> GetSalesAsync(PaginationRequest request);
         Task<Result<SaleDTO>> GetSaleByVoucherCodeAsync(string voucherCode);
         bool ValidateSale(CreateSaleDTO sale);
         decimal TotalPrice(CreateSaleDTO reqSale, Dictionary<int, Tbl_Product> products);

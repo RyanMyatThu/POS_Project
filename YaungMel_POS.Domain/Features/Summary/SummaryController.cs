@@ -33,19 +33,14 @@ namespace YaungMel_POS.Domain.Features.Summary
         // GET: api/summaries/paged?pageNo=1&pageSize=10
         [HttpGet]
         [HttpGet("paged")]
-        public async Task<IActionResult> GetSummaryByPagination(
-            [FromQuery] int pageNo = 1,
-            [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetSummaryByPagination([FromQuery] PaginationRequest request)
         {
-            if (pageNo <= 0 || pageSize <= 0)
-            {
-                return BadRequest(Result<object>.SystemError("Page number and page size must be greater than zero."));
-            }
-
-            var result = await _service.GetSummaryByPagination(pageNo, pageSize);
+            var result = await _service.GetSummaryByPagination(request);
 
             if (!result.IsSuccess)
+            {
                 return BadRequest(result);
+            }
 
             return Ok(result);
         }
@@ -56,7 +51,7 @@ namespace YaungMel_POS.Domain.Features.Summary
         {
             if (date == default)
             {
-                return BadRequest(Result<object>.SystemError("Date is required."));
+                return BadRequest(PagedResult<object>.SystemError("Date is required."));
             }
 
             var result = await _service.GetSummaryByDateAsync(date);
@@ -79,7 +74,7 @@ namespace YaungMel_POS.Domain.Features.Summary
         {
             if (startDate == default || endDate == default)
             {
-                return BadRequest(Result<object>.SystemError("Start date and end date are required."));
+                return BadRequest(PagedResult<object>.SystemError("Start date and end date are required."));
             }
 
             var result = await _service.GetSummaryByDateRangeAsync(startDate, endDate);
