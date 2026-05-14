@@ -24,25 +24,23 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
         }
 
         #region get categories with pagination
-        public async Task<Result<CategoryListResponseModel>> GetAsync(int pageNo, int pageSize)
+        public async Task<PagedResult<CategoryDTO>> GetAsync(PaginationRequest request)
         {
+            if (request is null) return PagedResult<CategoryDTO>.ValidationError("Request cannot be null!");
+
             try
             {
-                if (pageSize <= 0) return Result<CategoryListResponseModel>.SystemError("Page size must be greater than 0.");
-                var totalItems = await _db.Categories
-                    .AsNoTracking()
-                    .Where(c => !c.DeleteFlag)
-                    .CountAsync();
-
-                var pageCount = totalItems / pageSize;
-                if (totalItems % pageSize > 0) pageCount++;
+                var totalCategories = await _db.Categories
+                                            .AsNoTracking()
+                                            .Where(c => !c.DeleteFlag)
+                                            .CountAsync();
 
                 var categories = await _db.Categories
                     .AsNoTracking()
                     .Where(c => !c.DeleteFlag)
                     .OrderByDescending(c => c.Id)
-                    .Skip((pageNo - 1) * pageSize)
-                    .Take(pageSize)
+                    .Skip((request.PageNumber - 1) * request.PageSize)
+                    .Take(request.PageSize)
                     .Select(c => new CategoryDTO
                     {
                         Id = c.Id,
@@ -51,17 +49,12 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     })
                     .ToListAsync();
 
-                var result = new CategoryListResponseModel
-                {
-                    Items = categories,
-                    PageSetting = new PageSettingDTO(pageNo, pageSize, pageCount)
-                };
-
-                return Result<CategoryListResponseModel>.Success(result);
+                var pagination = new Pagination(request.PageSize, request.PageNumber, totalCategories);
+                return PagedResult<CategoryDTO>.Success(categories, pagination, "Categories retrieved successfully!");
             }
             catch (Exception ex)
             {
-                return Result<CategoryListResponseModel>.SystemError($"Error: {ex.Message}");
+                return PagedResult<CategoryDTO>.SystemError($"Error: {ex.Message}");
             }
         }
         #endregion
@@ -85,7 +78,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     Description = category.Description
                 };
 
-                return Result<CategoryDTO>.Success(data);
+                return Result<CategoryDTO>.Success(data, $"{data.Name} retreived successfully!");
             }
             catch (Exception ex)
             {
@@ -102,7 +95,10 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                 var duplicateCategory = await _db.Categories
                     .AnyAsync(c => c.Name.ToLower() == request.Name.Trim().ToLower() && !c.DeleteFlag);
 
-                if (duplicateCategory) return Result<CategoryDTO>.SystemError("Category with same name exists.");
+                if (duplicateCategory) return Result<CategoryDTO>.ValidationError("Category with same name exists.");
+
+                if (string.IsNullOrWhiteSpace(request.Name))
+                    return Result<CategoryDTO>.ValidationError("Category name is required.");
 
                 var newCategory = new Tbl_Category
                 {
@@ -141,21 +137,19 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                 if (category is null) return Result<CategoryDTO>.NotFound("Category not found.");
 
                 if (!string.IsNullOrWhiteSpace(request.Name))
-                {
-                    var isDuplicate = await _db.Categories.AnyAsync(c =>
-                        c.Id != id &&
-                        !c.DeleteFlag &&
-                        c.Name != null &&
-                        c.Name.ToLower() == request.Name.Trim().ToLower());
-
-                    if (isDuplicate)
-                        return Result<CategoryDTO>.SystemError("Another category with the same name already exists.");
-
                     category.Name = request.Name.Trim();
-                }
 
                 if (!string.IsNullOrWhiteSpace(request.Description))
                     category.Description = request.Description.Trim();
+
+                var isDuplicate = await _db.Categories.AnyAsync(c =>
+                        c.Id != id &&
+                        !c.DeleteFlag &&
+                        c.Name != null &&
+                        c.Name.ToLower() == request.Name!.Trim().ToLower());
+
+                if (isDuplicate)
+                    return Result<CategoryDTO>.ValidationError("Another category with the same name already exists.");
 
                 category.UpdatedAt = DateTime.UtcNow;
                 category.UpdatedBy = userId;
@@ -186,10 +180,10 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                 var category = await _db.Categories.FirstOrDefaultAsync(c => c.Id == id);
 
                 if (category is null) return Result<bool>.NotFound("Category not found!");
-
+                    
                 var hasProducts = await _db.Products.AnyAsync(p => p.CategoryId == id && !p.DeleteFlag);
 
-                if (hasProducts) return Result<bool>.SystemError("Cannot delete category with existing products.");
+                if (hasProducts) return Result<bool>.ValidationError("Cannot delete category with existing products.");
 
                 category.DeleteFlag = true;
                 category.UpdatedAt = DateTime.UtcNow;
@@ -197,7 +191,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
 
                 await _db.SaveChangesAsync();
 
-                return Result<bool>.Success(true, "Category deleted successfully.");
+                return Result<bool>.DeleteSuccess("Category deleted successfully.");
             }
             catch (Exception ex)
             {

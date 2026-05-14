@@ -29,7 +29,7 @@ namespace YaungMel_POS.Domain.Features.Inventory
             };
         }
 
-        private IQueryable<Tbl_Product> ActiveProduct => _db.Products.Where(p => !p.DeleteFlag);
+        private IQueryable<Tbl_Product> ActiveProduct => _db.Products.Where(p => !p.DeleteFlag && p.IsActive);
 
         #region increase stock
         public async Task<Result<bool>> IncreaseStockAsync(int productId, int quantity, int userId)
@@ -49,7 +49,7 @@ namespace YaungMel_POS.Domain.Features.Inventory
 
                 await _db.SaveChangesAsync();
 
-                await _auditService.LogUpdateAsync(product, userId, oldValues, "Product");
+                await _auditService.LogUpdateAsync(product, userId, oldValues, $"{product.Name}");
 
                 return Result<bool>.Success(true, "Stock increased successfully.");
             }
@@ -84,7 +84,7 @@ namespace YaungMel_POS.Domain.Features.Inventory
 
                 await _db.SaveChangesAsync();
 
-                await _auditService.LogUpdateAsync(product, userId, oldValues, "Product");
+                await _auditService.LogUpdateAsync(product, userId, oldValues, $"{product.Name}");
 
                 return Result<bool>.Success(true, "Stock decreased successfully.");
             }

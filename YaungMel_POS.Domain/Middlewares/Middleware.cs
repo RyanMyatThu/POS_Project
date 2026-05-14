@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using YaungMel_POS.Domain.Features.Auth;
+using Microsoft.VisualBasic;
 
 namespace YaungMel_POS.Domain.Middlewares;
 
@@ -50,11 +51,13 @@ public class Middleware
                     var authService = context.RequestServices.GetRequiredService<IAuthService>();
                     var result = await authService.RefreshTokenAsync(refreshToken);
 
-                    if (result != null)
+                    if (result.Data != null)
                     {
-                        ValidateToken(result.AccessToken, context);
+                        var tokenResponse = result.Data;
 
-                        context.Response.Headers.Append("X-Access-Token", result.AccessToken);
+                        ValidateToken(tokenResponse.AccessToken, context);
+
+                        context.Response.Headers.Append("X-Access-Token", tokenResponse.AccessToken);
 
                         var cookieOptions = new CookieOptions
                         {
@@ -63,7 +66,7 @@ public class Middleware
                             SameSite = SameSiteMode.Strict,
                             Expires = DateTime.UtcNow.AddDays(7)
                         };
-                        context.Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptions);
+                        context.Response.Cookies.Append("refreshToken", tokenResponse.RefreshToken, cookieOptions);
                     }
                 }
                 catch

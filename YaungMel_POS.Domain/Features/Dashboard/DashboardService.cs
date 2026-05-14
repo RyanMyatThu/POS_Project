@@ -206,11 +206,11 @@ public class DashboardService : IDashboardService
     #region [4] Top Products
     public async Task<Result<List<TopProductDTO>>> GetTopProductsAsync(int top = 10)
     {
+        if (top <= 0)
+            return Result<List<TopProductDTO>>.SystemError("Top count must be greater than 0.");
+
         try
         {
-            if (top <= 0)
-                return Result<List<TopProductDTO>>.SystemError("Top count must be greater than 0.");
-
             var topProducts = await _db.SaleItems
                 .GroupBy(si => new { si.ProductId, si.Product.Name })
                 .Select(g => new TopProductDTO

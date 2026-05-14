@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using YaungMel_POS.Database.Data;
 using YaungMel_POS.Database.Models;
 using YaungMel_POS.Domain.DTOs;
-using static YaungMel_POS.Domain.DTOs.SearchProductRequestDTO;
+using YaungMel_POS.Shared;
 
 namespace YaungMel_POS.Domain.Features.Search
 {
@@ -10,12 +10,11 @@ namespace YaungMel_POS.Domain.Features.Search
     {
         private readonly POSDbContext _db;
 
-     
-
         public SearchService(POSDbContext db)
         {
             _db = db;
         }
+
         private IQueryable<Tbl_Product> ActiveProductQuery => _db.Products
             .AsNoTracking()
             .Where(p => !p.DeleteFlag);
@@ -24,100 +23,118 @@ namespace YaungMel_POS.Domain.Features.Search
             .AsNoTracking()
             .Where(c => !c.DeleteFlag);
 
-        public Task<List<CategoryDTO>> SearchCategoryAsync(SearchCategoryRequestDTO searchRequest)
+        public async Task<Result<List<CategoryDTO>>> SearchCategoryAsync(SearchCategoryRequestDTO request)
         {
-            var query = ActiveCategoryQuery.AsQueryable();
+            if (request == null)
+                return Result<List<CategoryDTO>>.ValidationError("Search request cannot be null.");
 
-            if(searchRequest.Name != null)
-                query = query.Where(c => c.Name.ToLower().Contains(searchRequest.Name.ToLower()));
+            try
+            {
+                var query = ActiveCategoryQuery;
 
-            if(searchRequest.IsDescending)
-                query = query.OrderByDescending(c => c.Name);
-            else
-                query = query.OrderBy(c => c.Name);
+                if (!string.IsNullOrWhiteSpace(request.Name))
+                    query = query.Where(c => c.Name.ToLower().Contains(request.Name.ToLower()));
 
-            var categories = query
-                .Skip((searchRequest.PageNumber - 1) * searchRequest.PageSize)
-                .Take(searchRequest.PageSize)
-                .Select(c => new CategoryDTO
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Description = c.Description,
-                })
-                .ToListAsync();
+                query = request.IsDescending
+                    ? query.OrderByDescending(c => c.Name)
+                    : query.OrderBy(c => c.Name);
 
-           return categories;
+                var categories = await query
+                    .Skip((request.PageNumber - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .Select(c => new CategoryDTO
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Description = c.Description,
+                    })
+                    .ToListAsync();
+
+                return Result<List<CategoryDTO>>.Success(categories);
+            }
+            catch (Exception ex)
+            {
+                return Result<List<CategoryDTO>>.SystemError(ex.Message);
+            }
         }
 
-        public async Task<ProductSearchResponseDTO> SearchProductsAsync(SearchProductRequestDTO searchRequest)
+        public async Task<PagedResult<ProductDTO>> SearchProductsAsync(SearchProductRequestDTO request)
         {
-            var query = ActiveProductQuery.AsQueryable();
+            if (request == null)
+                return PagedResult<ProductDTO>.ValidationError("Search request cannot be null.");
 
-            if(searchRequest.CategoryId.HasValue)
-                query = query.Where(p => p.CategoryId == searchRequest.CategoryId.Value);
-
-            if(searchRequest.MinPrice.HasValue)
-                query = query.Where(p => p.Price >= searchRequest.MinPrice.Value);
-
-            if(searchRequest.MaxPrice.HasValue)
-                query = query.Where(p => p.Price <= searchRequest.MaxPrice.Value);
-
-            if(searchRequest.StartDate.HasValue)
-                query = query.Where(p => p.CreatedAt >= searchRequest.StartDate.Value);
-
-            if(searchRequest.EndDate.HasValue)
-                query = query.Where(p => p.CreatedAt <= searchRequest.EndDate.Value);
-
-            if(searchRequest.MinStockQuantity.HasValue)
-                query = query.Where(p => p.StockQuantity >= searchRequest.MinStockQuantity.Value);
-
-            if(searchRequest.MaxStockQuantity.HasValue)
-                query = query.Where(p => p.StockQuantity <= searchRequest.MaxStockQuantity.Value);
-
-            if (!string.IsNullOrEmpty(searchRequest.Name))
-                query = query.Where(p => p.Name.ToLower().Contains(searchRequest.Name.ToLower()));
-
-            query = searchRequest.SortBy switch
+            try
             {
-                SortOptions.name => searchRequest.IsDescending ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name),
-                SortOptions.price => searchRequest.IsDescending ? query.OrderByDescending(p => p.Price) : query.OrderBy(p => p.Price),
-                SortOptions.createdDate => searchRequest.IsDescending ? query.OrderByDescending(p => p.CreatedAt) : query.OrderBy(p => p.CreatedAt),
-                _ => query
-            };
+                var query = ActiveProductQuery;
 
-            var totalCount = await query.CountAsync();
-            var pageCount = (int)Math.Ceiling((double)totalCount / searchRequest.PageSize);
+                // Filtering
+                if (request.CategoryId.HasValue)
+                    query = query.Where(p => p.CategoryId == request.CategoryId.Value);
 
-            var products = await query
-                .Skip((searchRequest.PageNumber - 1) * searchRequest.PageSize)
-                .Take(searchRequest.PageSize)
-                .Select(p => new ProductDTO
+                if (request.MinPrice.HasValue)
+                    query = query.Where(p => p.Price >= request.MinPrice.Value);
+
+                if (request.MaxPrice.HasValue)
+                    query = query.Where(p => p.Price <= request.MaxPrice.Value);
+
+                if (request.StartDate.HasValue)
+                    query = query.Where(p => p.CreatedAt >= request.StartDate.Value);
+
+                if (request.EndDate.HasValue)
+                    query = query.Where(p => p.CreatedAt <= request.EndDate.Value);
+
+                if (request.MinStockQuantity.HasValue)
+                    query = query.Where(p => p.StockQuantity >= request.MinStockQuantity.Value);
+
+                if (request.MaxStockQuantity.HasValue)
+                    query = query.Where(p => p.StockQuantity <= request.MaxStockQuantity.Value);
+
+                if (!string.IsNullOrWhiteSpace(request.Name))
+                    query = query.Where(p => p.Name.ToLower().Contains(request.Name.ToLower()));
+
+                // Sorting
+                query = request.SortBy switch
                 {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Description = p.Description,
-                    Price = p.Price,
-                    PriceFormatted = p.Price.ToString("N0") + " MMK",
-                    StockQuantity = p.StockQuantity,
-                    CategoryId = p.CategoryId,
-                    DeleteFlag = p.DeleteFlag,
-                    ImageUrl = p.ImageUrl,
-                    IsActive = p.IsActive,
-                }).ToListAsync();
+                    SearchProductRequestDTO.SortOptions.name
+                        => request.IsDescending ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name),
 
-            return new ProductSearchResponseDTO
+                    SearchProductRequestDTO.SortOptions.price
+                        => request.IsDescending ? query.OrderByDescending(p => p.Price) : query.OrderBy(p => p.Price),
+
+                    SearchProductRequestDTO.SortOptions.createdDate
+                        => request.IsDescending ? query.OrderByDescending(p => p.CreatedAt) : query.OrderBy(p => p.CreatedAt),
+
+                    _ => query.OrderBy(p => p.Name)   // Default
+                };
+
+                var totalCount = await query.CountAsync();
+
+                var products = await query
+                    .Skip((request.PageNumber - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .Select(p => new ProductDTO
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Description = p.Description,
+                        Price = p.Price,
+                        PriceFormatted = p.Price.ToString("N0") + " MMK",
+                        StockQuantity = p.StockQuantity,
+                        CategoryId = p.CategoryId,
+                        DeleteFlag = p.DeleteFlag,
+                        ImageUrl = p.ImageUrl,
+                        IsActive = p.IsActive,
+                    })
+                    .ToListAsync();
+
+                var pagination = new Pagination(request.PageSize, request.PageNumber, totalCount);
+
+                return PagedResult<ProductDTO>.Success(products, pagination);
+            }
+            catch (Exception ex)
             {
-                Items = products,
-                PageSetting = new PageSettingDTO
-                {
-                    PageNo = searchRequest.PageNumber,
-                    PageSize = searchRequest.PageSize,
-                    PageCount = pageCount
-                }
-            };
+                return PagedResult<ProductDTO>.SystemError(ex.Message);
+            }
         }
-
-        
     }
 }

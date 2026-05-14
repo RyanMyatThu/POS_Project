@@ -36,7 +36,6 @@ ProductsController
 GET api/products/paged?pageNo=&pageSize=
 GET api/products/{id}
 POST api/products
-POST api/products/bulk
 PATCH api/products/{id}
 DELETE api/products/{id}
 
