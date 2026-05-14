@@ -95,7 +95,7 @@ try
         options.AddPolicy(name: MyAllowSpecificOrigins,
             policy =>
             {
-                policy.WithOrigins("https://yaung-mel-pos.vercel.app", "http://localhost:3000", "http://localhost:5173")
+                policy.WithOrigins("https://yaung-mel-pos-hazel.vercel.app", "http://localhost:3000", "http://localhost:5173")
                       .AllowAnyHeader()
                       .AllowAnyMethod()
                       .AllowCredentials();
@@ -130,7 +130,7 @@ try
     // Configure the HTTP request pipeline.    {
     app.MapSwagger("/openapi/{documentName}.json");
     app.MapScalarApiReference();
-   
+
 
 
     app.UseCors("_myAllowSpecificOrigins");
