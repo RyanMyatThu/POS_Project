@@ -48,19 +48,21 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
 
         // POST: api/products/
         [Authorize(Roles = "Admin")]
-        [HttpPost()]
+        [HttpPost]
         public async Task<IActionResult> Create([FromForm] CreateProductDTO createRequest, IFormFile? photoFile)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            Stream? stream = null;
+            string fileName = string.Empty;
+
             try
             {
-                using var stream = photoFile?.Length > 0 ? photoFile.OpenReadStream() : null;
-                var fileName = string.Empty;
                 if (photoFile != null && photoFile.Length > 0)
                 {
-                    fileName = string.IsNullOrWhiteSpace(photoFile.FileName) ? "uploaded-photo" : photoFile.FileName;
+                    stream = photoFile.OpenReadStream();
+                    fileName = photoFile.FileName ?? "uploaded-photo";
                 }
 
                 var result = await _service.CreateAsync(createRequest, stream, fileName, GetCurrentUserId());
@@ -68,14 +70,11 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                 if (!result.IsSuccess)
                     return BadRequest(result);
 
-                return CreatedAtAction(
-                    nameof(GetById),
-                    new { id = result.Data?.Id },
-                    result);
+                return CreatedAtAction(nameof(GetById), new { id = result.Data?.Id }, result);
             }
-            catch (Exception ex)
+            finally
             {
-                return BadRequest(Result<ProductDTO>.SystemError($"An internal error occurred: {ex.Message}"));
+                stream?.Dispose();
             }
         }
 
