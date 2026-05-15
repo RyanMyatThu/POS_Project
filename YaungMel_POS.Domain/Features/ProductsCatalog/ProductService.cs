@@ -137,22 +137,27 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                 if (!categoryExists)
                     return Result<ProductDTO>.ValidationError("Category not found");
 
+                // photo upload
                 string photoUrl = null;
                 if (photoStream != null)
                 {
-                    var uploadFileName = string.IsNullOrWhiteSpace(fileName) ? request.Name : fileName;
-                    var uploadResult = await _photoService.UploadPhotoAsync(photoStream, uploadFileName);
-                    if (uploadResult == null || uploadResult.Error != null || uploadResult.SecureUrl == null)
+                    using (photoStream)
                     {
-                        var uploadError = uploadResult?.Error?.Message;
-                        var message = string.IsNullOrWhiteSpace(uploadError)
-                        ? "Photo upload failed."
-                        : $"Photo upload failed: {uploadError}";
-                        return Result<ProductDTO>.SystemError(message);
+                        var uploadFileName = string.IsNullOrWhiteSpace(fileName) ? request.Name : fileName;
+                        var uploadResult = await _photoService.UploadPhotoAsync(photoStream, uploadFileName);
+                        if (uploadResult == null || uploadResult.Error != null || uploadResult.SecureUrl == null)
+                        {
+                            var uploadError = uploadResult?.Error?.Message;
+                            var message = string.IsNullOrWhiteSpace(uploadError)
+                            ? "Photo upload failed."
+                            : $"Photo upload failed: {uploadError}";
+                            return Result<ProductDTO>.SystemError(message);
+                        }
+                        photoUrl = uploadResult.SecureUrl.ToString();
+                        photoPublicId = uploadResult.PublicId;
                     }
-                    photoUrl = uploadResult.SecureUrl.ToString();
-                    photoPublicId = uploadResult.PublicId;
                 }
+
                 var newProduct = new Tbl_Product
                 {
                     Name = request.Name.Trim(),

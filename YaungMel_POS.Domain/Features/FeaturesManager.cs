@@ -36,13 +36,22 @@ namespace YaungMel_POS.Domain.Features
             }
             var loyaltySettings = builder.Configuration.GetSection("LoyaltyApiSettings");
 
-            // DinkToPDF 
+            // DinkToPDF
             builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
             //cloudinary config
-            var cloudName = builder.Configuration["Cloudinary:CloudName"]?.Trim();
-            var apiKey = builder.Configuration["Cloudinary:ApiKey"]?.Trim();
-            var apiSecret = builder.Configuration["Cloudinary:ApiSecret"]?.Trim();
+            var cloudName = new[] { "Cloudinary:CloudName", "CLOUDINARY_CLOUD_NAME", "cloud_name" }
+                .Select(key => builder.Configuration[key])
+                .FirstOrDefault(val => !string.IsNullOrWhiteSpace(val))?.Trim();
+
+            var apiKey = new[] { "Cloudinary:ApiKey", "CLOUDINARY_API_KEY", "api_key" }
+                .Select(key => builder.Configuration[key])
+                .FirstOrDefault(val => !string.IsNullOrWhiteSpace(val))?.Trim();
+
+            var apiSecret = new[] { "Cloudinary:ApiSecret", "CLOUDINARY_API_SECRET", "api_secret" }
+                .Select(key => builder.Configuration[key])
+                .FirstOrDefault(val => !string.IsNullOrWhiteSpace(val))?.Trim();
+
             var acc = new Account(cloudName, apiKey, apiSecret);
             builder.Services.AddSingleton(new Cloudinary(acc));
             builder.Services.AddScoped<IPhotoService, PhotoService>();
@@ -75,7 +84,7 @@ namespace YaungMel_POS.Domain.Features
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<ISummaryService, SummaryService>();  
+            builder.Services.AddScoped<ISummaryService, SummaryService>();
             builder.Services.AddScoped<IReportService, ReportService>();
         }
     }

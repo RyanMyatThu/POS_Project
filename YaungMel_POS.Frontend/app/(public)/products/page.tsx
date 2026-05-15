@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { productsApi, categoriesApi } from "@/lib/api";
-import type { ProductDTO, CategoryDTO } from "@/lib/types";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
-import { Modal } from "@/components/ui/Modal";
-import { SkeletonTable } from "@/components/ui/Skeleton";
 import { AnimatedPage } from "@/components/ui/AnimatedPage";
-import { toast } from "@/components/ui/Toast";
-import { useAuth } from "@/lib/auth-context";
-import { Plus, Search, Edit2, Trash2, Package, Filter, Upload } from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
+import { SkeletonTable } from "@/components/ui/Skeleton";
+import { toast } from "@/components/ui/Toast";
+import { categoriesApi, productsApi } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import type { CategoryDTO, ProductDTO } from "@/lib/types";
+import { Edit2, Filter, Package, Plus, Search, Trash2, Upload } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function ProductsPage() {
   const { isAdmin } = useAuth();
@@ -24,7 +24,7 @@ export default function ProductsPage() {
   const [filterCategory, setFilterCategory] = useState<number | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editProduct, setEditProduct] = useState<ProductDTO | null>(null);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteProduct, setDeleteProduct] = useState<ProductDTO | null>(null);
   const [form, setForm] = useState({ name: "", description: "", price: "", stockQuantity: "", categoryId: "" });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [formLoading, setFormLoading] = useState(false);
@@ -98,16 +98,16 @@ export default function ProductsPage() {
         };
         const res = photoFile
           ? await (() => {
-              const payload = new FormData();
-              payload.append("Name", form.name);
-              payload.append("Description", form.description || "");
-              payload.append("Price", Number(form.price).toString());
-              payload.append("StockQuantity", Number(form.stockQuantity).toString());
-              payload.append("CategoryId", Number(form.categoryId).toString());
-              payload.append("Version", String(editProduct.version ?? 0));
-              payload.append("photoFile", photoFile);
-              return productsApi.updateWithPhoto(editProduct.id, payload);
-            })()
+            const payload = new FormData();
+            payload.append("Name", form.name);
+            payload.append("Description", form.description || "");
+            payload.append("Price", Number(form.price).toString());
+            payload.append("StockQuantity", Number(form.stockQuantity).toString());
+            payload.append("CategoryId", Number(form.categoryId).toString());
+            payload.append("Version", String(editProduct.version ?? 0));
+            payload.append("photoFile", photoFile);
+            return productsApi.updateWithPhoto(editProduct.id, payload);
+          })()
           : await productsApi.update(editProduct.id, updatePayload);
         if (res.isSuccess) { toast("success", "Product updated"); setShowCreateModal(false); void loadData(); }
         else toast("error", res.message);
@@ -121,7 +121,7 @@ export default function ProductsPage() {
           payload.append("StockQuantity", (Number(form.stockQuantity) || 0).toString());
           payload.append("CategoryId", Number(form.categoryId).toString());
           payload.append("photoFile", photoFile);
-          res = await productsApi.createWithPhoto(payload);
+          res = await productsApi.create(payload);
         } else {
           res = await productsApi.create({ name: form.name, description: form.description || undefined, price: Number(form.price), stockQuantity: Number(form.stockQuantity) || 0, categoryId: Number(form.categoryId) });
         }
@@ -135,10 +135,10 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async () => {
-    if (!deleteId) return;
+    if (!deleteProduct) return;
     try {
-      const res = await productsApi.delete(deleteId);
-      if (res.isSuccess) { toast("success", "Product deleted"); setDeleteId(null); void loadData(); }
+      const res = await productsApi.delete(deleteProduct.id, deleteProduct.version ?? 0);
+      if (res.isSuccess) { toast("success", "Product deleted"); setDeleteProduct(null); void loadData(); }
       else toast("error", res.message);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Delete failed";
@@ -222,7 +222,7 @@ export default function ProductsPage() {
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <button onClick={() => openEdit(p)} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-primary-soft)] transition-colors cursor-pointer"><Edit2 size={16} /></button>
-                          {isAdmin && (<button onClick={() => setDeleteId(p.id)} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent-danger)] hover:bg-[var(--accent-danger-soft)] transition-colors cursor-pointer"><Trash2 size={16} /></button>)}
+                          {isAdmin && (<button onClick={() => setDeleteProduct(p)} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent-danger)] hover:bg-[var(--accent-danger-soft)] transition-colors cursor-pointer"><Trash2 size={16} /></button>)}
                         </div>
                       </td>
                     </tr>
@@ -288,10 +288,10 @@ export default function ProductsPage() {
           </div>
         </Modal>
 
-        <Modal isOpen={!!deleteId} onClose={() => setDeleteId(null)} title="Delete Product" size="sm">
+        <Modal isOpen={!!deleteProduct} onClose={() => setDeleteProduct(null)} title="Delete Product" size="sm">
           <p className="text-sm text-[var(--text-secondary)] mb-6">Are you sure you want to delete this product? This action cannot be undone.</p>
           <div className="flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setDeleteId(null)}>Cancel</Button>
+            <Button variant="secondary" onClick={() => setDeleteProduct(null)}>Cancel</Button>
             <Button variant="danger" onClick={handleDelete}>Delete</Button>
           </div>
         </Modal>
